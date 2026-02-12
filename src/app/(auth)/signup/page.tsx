@@ -4,11 +4,7 @@ import React from "react";
 
 const Page = async () => {
   await requireUnauth();
-  return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center font-sans">
-      <SignupForm />
-    </div>
-  );
+  return <SignupForm />;
 };
 
 export default Page;
