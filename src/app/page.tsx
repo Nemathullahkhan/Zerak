@@ -1,8 +1,29 @@
-import { prisma } from "@/lib/db";
-import React from "react";
+import { useTRPC } from "@/trpc/client";
+import { getQueryClient, trpc } from "@/trpc/server";
+// import { prisma } from "@/lib/db";
+// import { caller } from "@/trpc/server";
+import { dehydrate, HydrationBoundary, useQuery } from "@tanstack/react-query";
+import React, { Suspense } from "react";
+import Client from "./client";
 
-const page = () => {
-  return <div className="text-red-500">{JSON.stringify(users)}</div>;
+const Page = () => {
+  // const users = await caller.getUsers(); -- fetch data from trpc server
+  // fetch data from trpc in a client component
+  // const trpc = useTRPC();
+  // const { data: users } = useQuery(trpc.getUsers.queryOptions());
+
+  const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(trpc.getUsers.queryOptions());
+
+  return (
+    <div className="min-h-screen min-w-screen flex items-center justify-center">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <Suspense fallback={<p>Loading....</p>}>
+          <Client />
+        </Suspense>
+      </HydrationBoundary>
+    </div>
+  );
 };
 
-export default page;
+export default Page;
