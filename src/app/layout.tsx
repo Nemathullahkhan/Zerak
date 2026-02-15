@@ -4,6 +4,7 @@ import { Varela_Round } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "@/components/ui/sonner";
+import ZerakLogo from "../../public/logos/ZerakLogo2.svg"; // Remove curly braces
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,9 @@ export const metadata: Metadata = {
   title: "Zerak — AI-Native Workflow Automation",
   description:
     "AI-native workflow automation with pre-execution cost estimation, parallel DAG execution, and real-time monitoring.",
+  icons: {
+    icon: ZerakLogo.src, // Use .src to get the URL
+  },
 };
 
 export default function RootLayout({

@@ -90,3 +90,4 @@ export function Footer({ navLinks, onNavClick }: FooterProps) {
   );
 }
 
+

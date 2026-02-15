@@ -43,3 +43,4 @@ export function MissionSection({ sectionRef }: MissionSectionProps) {
   );
 }
 
+
