@@ -4,6 +4,13 @@ import { prisma } from "@/lib/db";
 import { inngest } from "@/app/inngest/client";
 
 export const appRouter = createTRPCRouter({
+  testAi: protectedProcedure.mutation(async () => {
+    await inngest.send({
+      name: "execute-ai",
+    });
+    return { success: true, message: "Job queued" };
+  }),
+
   getUsers: protectedProcedure.query(({ ctx }) => {
     return prisma.user.findMany({
       where: {

@@ -1,29 +1,14 @@
 "use client";
 
-import { caller, getQueryClient, trpc } from "@/trpc/server";
-// import { prisma } from "@/lib/db";
-// import { caller } from "@/trpc/server";
-import {
-  dehydrate,
-  HydrationBoundary,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import React, { Suspense } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
 import LandingPage from "./(landing_page)/page";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/logout";
-import { requireAuth } from "@/lib/auth-utils";
+import { toast } from "sonner";
 
 const Page = () => {
-  // await requireAuth();
-  // const data = await caller.getUsers(); // -- fetch data from trpc server component
-  // fetch data from trpc in a client component
-  // const trpc = useTRPC();
-  // const { data: users } = useQuery(trpc.getUsers.queryOptions());
-
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data } = useQuery(trpc.getWorkflows.queryOptions());
@@ -36,11 +21,25 @@ const Page = () => {
     }),
   );
 
+  const testAi = useMutation(
+    trpc.testAi.mutationOptions({
+      onSuccess: () => {
+        toast.success("AI job executed successfully!");
+      },
+      onError: (error) => {
+        toast.error(`AI job failed: ${error.message}`);
+      },
+    }),
+  );
+
   return (
     <>
       <div className="min-h-screen min-w-screen flex items-center justify-center flex-col gap-y-6">
         protected server component
         <div className="">{JSON.stringify(data, null, 2)}</div>
+        <Button onClick={() => testAi.mutate()} disabled={testAi.isPending}>
+          Test AI
+        </Button>
         <Button onClick={() => create.mutate()} disabled={create.isPending}>
           Create Workflow
         </Button>
