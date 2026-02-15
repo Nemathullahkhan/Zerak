@@ -1,63 +1,57 @@
 "use client";
 
-import { useMemo } from "react";
-import { useSectionScroll } from "@/features/landing-page/hooks/use-section-scroll";
+import { caller, getQueryClient, trpc } from "@/trpc/server";
+// import { prisma } from "@/lib/db";
+// import { caller } from "@/trpc/server";
 import {
-  Navbar,
-  HeroSection,
-  ProblemSection,
-  OrchestrationSection,
-  FeaturesSection,
-  BentoGrid,
-  ComparisonSection,
-  UsersSection,
-  PricingSection,
-  MissionSection,
-  CTASection,
-  Footer,
-} from "@/features/landing-page/components";
+  dehydrate,
+  HydrationBoundary,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import React, { Suspense } from "react";
+import LandingPage from "./(landing_page)/page";
+import { useTRPC } from "@/trpc/client";
+import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/auth/logout";
+import { requireAuth } from "@/lib/auth-utils";
 
-export default function Home() {
-  const { setSectionRef, scrollToSection } = useSectionScroll();
+const Page = () => {
+  // await requireAuth();
+  // const data = await caller.getUsers(); // -- fetch data from trpc server component
+  // fetch data from trpc in a client component
+  // const trpc = useTRPC();
+  // const { data: users } = useQuery(trpc.getUsers.queryOptions());
 
-  const navLinks = useMemo(
-    () =>
-      [
-        { key: "features", label: "Features" },
-        { key: "comparison", label: "Compare" },
-        { key: "pricing", label: "Pricing" },
-        { key: "mission", label: "Vision" },
-      ],
-    [],
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { data } = useQuery(trpc.getWorkflows.queryOptions());
+
+  const create = useMutation(
+    trpc.createWorkflow.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(trpc.getWorkflows.queryOptions());
+      },
+    }),
   );
 
   return (
-    <div className="scrollbar-zerak min-h-screen bg-neutral-950 text-neutral-400 selection:bg-white selection:text-neutral-950">
-      <Navbar navLinks={navLinks} onNavClick={scrollToSection} />
+    <>
+      <div className="min-h-screen min-w-screen flex items-center justify-center flex-col gap-y-6">
+        protected server component
+        <div className="">{JSON.stringify(data, null, 2)}</div>
+        <Button onClick={() => create.mutate()} disabled={create.isPending}>
+          Create Workflow
+        </Button>
+        <LogoutButton />
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-32 pb-24 space-y-28">
-        <HeroSection onCompareClick={() => scrollToSection("comparison")} />
-
-        <ProblemSection sectionRef={setSectionRef("problem")} />
-
-        <OrchestrationSection />
-
-        <FeaturesSection sectionRef={setSectionRef("features")} />
-
-        <BentoGrid />
-
-        <ComparisonSection sectionRef={setSectionRef("comparison")} />
-
-        <UsersSection sectionRef={setSectionRef("users")} />
-
-        <PricingSection sectionRef={setSectionRef("pricing")} />
-
-        <MissionSection sectionRef={setSectionRef("mission")} />
-
-        <CTASection />
-      </main>
-
-      <Footer navLinks={navLinks} onNavClick={scrollToSection} />
-    </div>
+      {/*     
+     For now we will just render the landing page, we can add the trpc client component later when we have some data to show
+      <LandingPage /> */}
+    </>
   );
-}
+};
+
+export default Page;
