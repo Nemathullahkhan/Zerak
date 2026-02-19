@@ -4,7 +4,8 @@ import { Varela_Round } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "@/components/ui/sonner";
-import ZerakLogo from "../../public/logos/ZerakLogo2.svg"; // Remove curly braces
+import ZerakLogo from "../../public/logos/ZerakLogo2.svg";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,8 +43,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${varelaRound.variable} antialiased`}
       >
         <TRPCReactProvider>
-          <Toaster />
-          {children}
+          <NuqsAdapter>
+            <Toaster />
+            {children}
+          </NuqsAdapter>
         </TRPCReactProvider>
       </body>
     </html>
