@@ -62,6 +62,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeComponents}
+        colorMode="dark"
         proOptions={{
           hideAttribution: true,
         }}
