@@ -2,7 +2,7 @@
 
 import { ErrorView, LoadingView } from "@/components/entity-components";
 import { useSuspenseWorkflow } from "@/features/workflows/hooks/use-workflows";
-import { useState, useCallback } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
 import {
   ReactFlow,
   applyNodeChanges,
@@ -22,6 +22,17 @@ import {
 import "@xyflow/react/dist/style.css";
 import { nodeComponents } from "@/config/node-components";
 import { AddNodeButton } from "./add-node-button";
+
+type EditorNodesContextValue = {
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+};
+
+const EditorNodesContext = createContext<EditorNodesContextValue | null>(null);
+
+export function useEditorNodes() {
+  return useContext(EditorNodesContext);
+}
 
 export const EditorLoading = () => {
   return <LoadingView message="Loading editor..." />;
@@ -55,26 +66,28 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
 
   return (
     <div className="size-full">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeComponents}
-        colorMode="dark"
-        proOptions={{
-          hideAttribution: true,
-        }}
-        fitView
-      >
-        <Background />
-        <Controls />
-        <MiniMap />
-        <Panel position="top-right">
-          <AddNodeButton />
-        </Panel>
-      </ReactFlow>
+      <EditorNodesContext.Provider value={{ setNodes, setEdges }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodeTypes={nodeComponents}
+          colorMode="dark"
+          proOptions={{
+            hideAttribution: true,
+          }}
+          fitView
+        >
+          <Background />
+          <Controls />
+          <MiniMap />
+          <Panel position="top-right">
+            <AddNodeButton />
+          </Panel>
+        </ReactFlow>
+      </EditorNodesContext.Provider>
     </div>
   );
 };
