@@ -22,6 +22,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { nodeComponents } from "@/config/node-components";
 import { AddNodeButton } from "./add-node-button";
+import { useSetAtom } from "jotai";
+import { editorAtom } from "../store/atoms";
 
 type EditorNodesContextValue = {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
@@ -44,6 +46,9 @@ export const EditorError = () => {
 
 export const Editor = ({ workflowId }: { workflowId: string }) => {
   const { data: workflow } = useSuspenseWorkflow(workflowId);
+
+  // Store the editor instance in Jotai atom for global access
+  const setEditor = useSetAtom(editorAtom);
 
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(workflow.edges);
@@ -78,7 +83,13 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
           proOptions={{
             hideAttribution: true,
           }}
+          onInit={setEditor}
           fitView
+          snapGrid={[10, 10]}
+          snapToGrid
+          panOnScroll
+          panOnDrag={false}
+          selectionOnDrag
         >
           <Background />
           <Controls />

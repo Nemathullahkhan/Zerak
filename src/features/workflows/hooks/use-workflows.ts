@@ -88,3 +88,27 @@ export const useSuspenseWorkflow = (id: string) => {
   const trpc = useTRPC();
   return useSuspenseQuery(trpc.workflows.getOne.queryOptions({ id }));
 };
+
+/**
+ * Hook to update a  workflow name
+ */
+
+export const useUpdateWorkflow = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.update.mutationOptions({
+      onSuccess: (data) => {
+        toast.success(`Workflow ${data.name} saved`);
+        queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions({}));
+        queryClient.invalidateQueries(
+          trpc.workflows.getOne.queryFilter({ id: data.id }),
+        );
+      },
+      onError: (error) => {
+        toast.error(`Failed to saved workflow: ${error.message}`);
+      },
+    }),
+  );
+};
