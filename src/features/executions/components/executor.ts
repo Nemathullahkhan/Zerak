@@ -3,9 +3,9 @@ import { NonRetriableError } from "inngest";
 import ky, { type Options as KyOptions } from "ky";
 
 type HttpRequestData = {
-  variableName?: string;
-  endpoint?: string;
-  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  variableName: string;
+  endpoint: string;
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: string;
 };
 
@@ -29,9 +29,14 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
     throw new NonRetriableError("Variable Name is not configured");
   }
 
+  if (!data.method) {
+    // TODO: Publist "error" state for http request
+    throw new NonRetriableError("Request Method is not configured");
+  }
+
   const result = await step.run("http-request", async () => {
-    const endpoint = data.endpoint!;
-    const method = data.method || "GET";
+    const endpoint = data.endpoint;
+    const method = data.method;
 
     const options: KyOptions = { method };
 
@@ -58,17 +63,9 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
         data: responseData,
       },
     };
-    if (data.variableName) {
-      return {
-        ...context,
-        [data.variableName]: responsePayload,
-      };
-    }
-
-    // Fallback to redirect httpResponse for backward compatibility
     return {
       ...context,
-      ...responsePayload,
+      [data.variableName]: responsePayload,
     };
   });
 
