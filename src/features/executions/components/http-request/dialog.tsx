@@ -43,7 +43,7 @@ const formSchema = z.object({
         "Variable name must start with a letter or underscore and container only letters, numbers, and underscores.",
     })
     .optional(),
-  endpoint: z.string().url("Please enter a valid URL").optional(),
+  endpoint: z.string().min(1, { message: "Please enter a valid url" }),
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).optional(),
   body: z.string().optional(),
   //   .refine()  TODO: Add validation for body based on method (e.g., body should be present for POST and PUT)
