@@ -1,3 +1,5 @@
+import { httpRequestChannel } from "@/app/inngest/channels/http-request";
+import { manualTriggerChannel } from "@/app/inngest/channels/manual-trigger";
 import { inngest } from "@/app/inngest/client";
 import { topologicalSort } from "@/app/inngest/utils";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
@@ -6,9 +8,18 @@ import { prisma } from "@/lib/db";
 import { NonRetriableError } from "inngest";
 
 export const executeWorkflow = inngest.createFunction(
-  { id: "execute-workflow" },
-  { event: "workflows/execute-workflow" },
-  async ({ event, step }) => {
+  {
+    id: "execute-workflow",
+    retries: 0, // TODO: REMOVE IN PRODUCTION
+  },
+
+  {
+    event: "workflows/execute-workflow",
+    channels: [
+      httpRequestChannel(),
+      manualTriggerChannel()],
+  },
+  async ({ event, step, publish }) => {
     const workflowId = event.data.workflowId;
 
     if (!workflowId) {
@@ -39,6 +50,7 @@ export const executeWorkflow = inngest.createFunction(
         nodeId: node.id,
         context,
         step,
+        publish,
       });
     }
 
