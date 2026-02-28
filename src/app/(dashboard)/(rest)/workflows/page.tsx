@@ -16,10 +16,13 @@ type Props = {
   searchParams: Promise<SearchParams>;
 };
 const Page = async ({ searchParams }: Props) => {
+  // make sure only authenticated users can hit this page
   await requireAuth();
 
   const params = await workflowsParamsLoader(searchParams);
-  prefetchWorkflows(params);
+  // await the prefetch so that any errors (e.g. unauthorized) are raised on
+  // the server instead of bubbling up during client hydration.
+  await prefetchWorkflows(params);
 
   return (
     <WorkflowsContainer>

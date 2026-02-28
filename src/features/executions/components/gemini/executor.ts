@@ -9,6 +9,17 @@ Handlebars.registerHelper("json", (context) => {
   return new Handlebars.SafeString(JSON.stringify(context, null, 2));
 });
 
+function extractTextFromSteps(result: unknown): string {
+  const steps = (result as { steps?: Array<{ content?: Array<{ text?: string }> }> })
+    ?.steps;
+  if (!Array.isArray(steps) || steps.length === 0) return "";
+  const last = steps[steps.length - 1];
+  const content = last?.content;
+  if (!Array.isArray(content)) return "";
+  const textPart = content.find((c) => c?.text != null);
+  return textPart?.text ?? "";
+}
+
 type GeminiData = {
   variableName?: string;
   model?: string;
@@ -64,7 +75,7 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
   });
 
   try {
-    const { text } = await step.ai.wrap("gemini-generate-text", generateText, {
+    const result = await step.ai.wrap("gemini-generate-text", generateText, {
       model: google("gemini-2.5-flash"),
       system: systemPrompt,
       prompt: userPrompt,
@@ -82,11 +93,16 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
       }),
     );
 
+    const text =
+      result?.text ??
+      (result as { _output?: string })?._output ??
+      extractTextFromSteps(result);
+    const outputText = text != null && text !== "" ? String(text) : "";
     return {
       ...context,
       [data.variableName]: {
-        aiResponse: text,
-        text: text, // same value, so {{variableName.text}} works as shown in the UI
+        aiResponse: outputText,
+        text: outputText, // same value, so {{variableName.text}} works as shown in the UI
       },
     };
   } catch (error) {

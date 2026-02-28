@@ -1,3 +1,4 @@
+import { contentSourceChannel } from "@/app/inngest/channels/content-source";
 import { geminiChannel } from "@/app/inngest/channels/gemini";
 import { googleFormTriggerChannel } from "@/app/inngest/channels/google-form-trigger";
 import { httpRequestChannel } from "@/app/inngest/channels/http-request";
@@ -18,6 +19,7 @@ export const executeWorkflow = inngest.createFunction(
   {
     event: "workflows/execute-workflow",
     channels: [
+      contentSourceChannel(),
       httpRequestChannel(),
       manualTriggerChannel(),
       googleFormTriggerChannel(),
