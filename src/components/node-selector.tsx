@@ -5,7 +5,7 @@ import { useReactFlow } from "@xyflow/react";
 
 import { NodeType } from "@/generated/prisma/enums";
 
-import { GlobeIcon, MousePointerIcon } from "lucide-react";
+import { GlobeIcon, MousePointerIcon, VideoIcon } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -48,6 +48,12 @@ const triggerNode: NodeTypeOption[] = [
 
 const executionNodes: NodeTypeOption[] = [
   {
+    type: NodeType.CONTENT_SOURCE,
+    label: "YouTube Transcript",
+    description: "Fetch transcript from a YouTube video URL",
+    icon: VideoIcon,
+  },
+  {
     type: NodeType.HTTP_REQUEST,
     label: "HTTP Request",
     description: "Make an HTTP request to an API endpoint",
@@ -58,6 +64,18 @@ const executionNodes: NodeTypeOption[] = [
     label: "Gemini",
     description: "Uses Google Gemini to generate text",
     icon: "/logos/gemini.svg",
+  },
+  {
+    type: NodeType.OPENAI,
+    label: "OpenAI",
+    description: "Uses OpenAi to generate text",
+    icon: "/logos/openai.svg",
+  },
+  {
+    type: NodeType.ANTHROPIC,
+    label: "Anthropic",
+    description: "Uses Anthropic to generate text",
+    icon: "/logos/anthropic.svg",
   },
 ];
 
