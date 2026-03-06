@@ -61,7 +61,7 @@ export default function SignupForm() {
       },
       {
         onSuccess: () => {
-          router.push("/");
+          router.push("/workflows");
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
