@@ -33,6 +33,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
+import { useCredentialsByType } from "@/features/credentials/hooks/use-credentials";
+import { CredentialType } from "@/generated/prisma/enums";
+import Image from "next/image";
 
 export const AVAILABLE_MODELS = [
   "gemini-2.5-flash",
@@ -50,8 +53,8 @@ const formSchema = z.object({
     .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, {
       message:
         "Variable name must start with a letter or underscore and container only letters, numbers, and underscores.",
-    })
-    .optional(),
+    }),
+  credentialId: z.string().min(1, "Credential is required"),
   model: z.string().min(1, { message: "Model is required" }),
   systemPrompt: z.string().optional(),
   userPrompt: z.string().min(1, "User prompt is required"),
@@ -72,10 +75,14 @@ export const GeminiDialog = ({
   onSubmit,
   defaultValues = {},
 }: Props) => {
+  const { data: credentials, isLoading: isLoadingCredentials } =
+    useCredentialsByType(CredentialType.GEMINI);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       variableName: defaultValues.variableName || "",
+      credentialId: defaultValues.credentialId || "",
       model: defaultValues.model || AVAILABLE_MODELS[0],
       systemPrompt: defaultValues.systemPrompt || "",
       userPrompt: defaultValues.userPrompt || "",
@@ -88,6 +95,7 @@ export const GeminiDialog = ({
     if (open) {
       form.reset({
         variableName: defaultValues.variableName || "",
+        credentialId: defaultValues.credentialId || "",
         model: defaultValues.model || AVAILABLE_MODELS[0],
         systemPrompt: defaultValues.systemPrompt || "",
         userPrompt: defaultValues.userPrompt || "",
@@ -130,6 +138,43 @@ export const GeminiDialog = ({
                     </span>
                     {`.text}}`}
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="credentialId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gemini Credential</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={isLoadingCredentials || !credentials?.length}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a credential" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {credentials?.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src="/logos/gemini.svg"
+                              alt="Gemini"
+                              width={16}
+                              height={16}
+                            />
+                            {option.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -205,8 +250,12 @@ export const GeminiDialog = ({
                     />
                   </FormControl>
                   <FormDescription>
-                    Use {"{{variableName}}"} for simple values, {"{{json variableName}}"} to stringify objects. For HTTP node response body use {"{{json variableName.httpResponse.data}}"}{" "}
-                    (replace variableName with the HTTP node&apos;s variable name, e.g. getTodos).
+                    Use {"{{variableName}}"} for simple values,{" "}
+                    {"{{json variableName}}"} to stringify objects. For HTTP
+                    node response body use{" "}
+                    {"{{json variableName.httpResponse.data}}"} (replace
+                    variableName with the HTTP node&apos;s variable name, e.g.
+                    getTodos).
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
