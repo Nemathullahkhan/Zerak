@@ -1,3 +1,2 @@
-clear
 -- AlterEnum
 ALTER TYPE "NodeType" ADD VALUE 'STRIPE_TRIGGER';

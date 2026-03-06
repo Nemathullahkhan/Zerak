@@ -97,6 +97,7 @@ enum CredentialType {
   OPENAI
   ANTHROPIC
   GEMINI
+
 }
 
 model Workflow {
@@ -127,6 +128,8 @@ enum NodeType {
   GEMINI
   OPENAI
   CONTENT_SOURCE
+  DISCORD
+  SLACK
 }
 
 model Node {
