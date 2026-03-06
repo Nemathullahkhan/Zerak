@@ -4,14 +4,16 @@ import { geminiChannel } from "@/app/inngest/channels/gemini";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText } from "ai";
 import { NonRetriableError } from "inngest";
+import { prisma } from "@/lib/db";
 
 Handlebars.registerHelper("json", (context) => {
   return new Handlebars.SafeString(JSON.stringify(context, null, 2));
 });
 
 function extractTextFromSteps(result: unknown): string {
-  const steps = (result as { steps?: Array<{ content?: Array<{ text?: string }> }> })
-    ?.steps;
+  const steps = (
+    result as { steps?: Array<{ content?: Array<{ text?: string }> }> }
+  )?.steps;
   if (!Array.isArray(steps) || steps.length === 0) return "";
   const last = steps[steps.length - 1];
   const content = last?.content;
@@ -22,6 +24,7 @@ function extractTextFromSteps(result: unknown): string {
 
 type GeminiData = {
   variableName?: string;
+  credentialId?: string;
   model?: string;
   systemPrompt?: string;
   userPrompt?: string;
@@ -51,6 +54,16 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
     throw new NonRetriableError("Gemini node: Variable Name is missing!");
   }
 
+  if (!data.credentialId) {
+    await publish(
+      geminiChannel().status({
+        nodeId,
+        status: "error",
+      }),
+    );
+    throw new NonRetriableError("Gemini node: Credential is required!");
+  }
+
   if (!data.userPrompt) {
     await publish(
       geminiChannel().status({
@@ -61,8 +74,17 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
     throw new NonRetriableError("Gemini node: User Prompt is missing!");
   }
 
-  // TODO: Fetch credential that user selected
-  const credentialValue = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const credential = await step.run("get-credential", () => {
+    return prisma.credential.findUnique({
+      where: {
+        id: data.credentialId,
+      },
+    });
+  });
+
+  if (!credential) {
+    throw new NonRetriableError("Gemini node: Credential is required!");
+  }
 
   const systemPrompt = data.systemPrompt
     ? Handlebars.compile(data.systemPrompt)(context)
@@ -71,7 +93,7 @@ export const geminiExecutor: NodeExecutor<GeminiData> = async ({
   const userPrompt = Handlebars.compile(data.userPrompt)(context);
 
   const google = createGoogleGenerativeAI({
-    apiKey: credentialValue,
+    apiKey: credential.value,
   });
 
   try {
