@@ -15,6 +15,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import {
   useCreateWorkflow,
+  useGenerateWorkflow,
   useRemoveWorkflow,
   useSuspenseWorkflows,
 } from "../hooks/use-workflows";
@@ -23,7 +24,72 @@ import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
 import { useEntitySearch } from "@/hooks/use-entity-search";
 import type { Workflow } from "@/generated/prisma/client";
-import { WorkflowIcon } from "lucide-react";
+import { Loader2Icon, SparklesIcon, WorkflowIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
+export const WorkflowsNLP = () => {
+  const [prompt, setPrompt] = useState("");
+  const generateWorkflow = useGenerateWorkflow();
+  const router = useRouter();
+
+  const handleGenerate = () => {
+    if (!prompt.trim()) return;
+    generateWorkflow.mutate(
+      { prompt },
+      {
+        onSuccess: (data) => {
+          router.push(`/workflows/${data.id}`);
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="relative border border-dashed rounded-lg p-6 bg-muted/50 flex flex-col gap-y-4">
+      {generateWorkflow.isPending && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+          <Loader2Icon className="size-8 animate-spin text-primary mb-4" />
+          <p className="text-lg font-medium">Generating your workflow...</p>
+          <p className="text-sm text-muted-foreground">
+            Claude is building the structure for you.
+          </p>
+        </div>
+      )}
+      <div className="flex items-center gap-x-2">
+        <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <SparklesIcon className="size-4 text-primary" />
+        </div>
+        <div className="flex flex-col">
+          <h3 className="text-sm font-semibold">AI Workflow Generator</h3>
+          <p className="text-xs text-muted-foreground">
+            Describe your workflow in plain English and let AI build it for you.
+          </p>
+        </div>
+      </div>
+      <Textarea
+        placeholder="e.g. Fetch content from a YouTube URL, summarize it with Claude, and send the summary to Slack"
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        className="min-h-[100px] resize-none bg-background shadow-none"
+        disabled={generateWorkflow.isPending}
+      />
+      <div className="flex justify-end">
+        <Button
+          onClick={handleGenerate}
+          disabled={!prompt.trim() || generateWorkflow.isPending}
+          size="sm"
+          className="gap-x-2"
+        >
+          <SparklesIcon className="size-4" />
+          Generate Workflow
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const WorkflowsSearch = () => {
   const [params, setParams] = useWorkflowsParams();
   const { searchValue, onSearchChange } = useEntitySearch({
@@ -48,14 +114,16 @@ export const WorkflowsList = () => {
   }
 
   return (
-    <EntityList
-      items={workflows.data.items}
-      getKey={(workflow) => workflow.id}
-      renderItem={(workflow) => (
-        <WorkflowItem key={workflow.id} data={workflow} />
-      )}
-      emptyView={<WorkflowsEmpty />}
-    />
+    <>
+      <EntityList
+        items={workflows.data.items}
+        getKey={(workflow) => workflow.id}
+        renderItem={(workflow) => (
+          <WorkflowItem key={workflow.id} data={workflow} />
+        )}
+        emptyView={<WorkflowsEmpty />}
+      />
+    </>
   );
 };
 
@@ -109,13 +177,16 @@ export const WorkflowsContainer = ({
   children: React.ReactNode;
 }) => {
   return (
-    <EntityContainer
-      header={<WorkflowsHeader />}
-      search={<WorkflowsSearch />}
-      pagination={<WorkflowPagination />}
-    >
-      {children}
-    </EntityContainer>
+    <>
+      <WorkflowsNLP />
+      <EntityContainer
+        header={<WorkflowsHeader />}
+        search={<WorkflowsSearch />}
+        pagination={<WorkflowPagination />}
+      >
+        {children}
+      </EntityContainer>
+    </>
   );
 };
 

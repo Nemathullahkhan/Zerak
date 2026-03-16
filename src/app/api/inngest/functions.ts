@@ -1,3 +1,4 @@
+import { anthropicChannel } from "@/app/inngest/channels/anthropic";
 import { contentSourceChannel } from "@/app/inngest/channels/content-source";
 import { discordChannel } from "@/app/inngest/channels/discord";
 import { geminiChannel } from "@/app/inngest/channels/gemini";
@@ -38,6 +39,7 @@ export const executeWorkflow = inngest.createFunction(
       googleFormTriggerChannel(),
       geminiChannel(),
       discordChannel(),
+      anthropicChannel(),
     ],
   },
   async ({ event, step, publish }) => {

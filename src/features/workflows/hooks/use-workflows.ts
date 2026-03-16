@@ -131,3 +131,27 @@ export const useExecuteWorkflow = () => {
     }),
   );
 };
+
+/**
+ * HOOK to generate an workflow using anthropic
+ */
+
+export const useGenerateWorkflow = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.generateFromPrompt.mutationOptions({
+      onSuccess: (data) => {
+        // Step 2: Show the generated workflow name/confirmation
+        toast.success(`Workflow "${data.name}" generated successfully`);
+
+        // Refresh the workflows list
+        queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions({}));
+      },
+      onError: (error) => {
+        toast.error(`Failed to generate workflow: ${error.message}`);
+      },
+    }),
+  );
+};

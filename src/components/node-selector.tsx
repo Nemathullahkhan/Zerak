@@ -89,6 +89,12 @@ const executionNodes: NodeTypeOption[] = [
     description: "Send a message to Slack.",
     icon: "/logos/slack.svg",
   },
+  {
+    type: NodeType.GMAIL,
+    label: "Gmail",
+    description: "Send a email.",
+    icon: "/logos/gmail.svg",
+  },
 ];
 
 interface NodeSelectorProps {

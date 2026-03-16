@@ -38,10 +38,9 @@ import { CredentialType } from "@/generated/prisma/enums";
 import Image from "next/image";
 
 export const ANTHROPIC_AVAILABLE_MODELS = [
-  "claude-3-5-sonnet",
-  "claude-3-opus",
-  "claude-3-sonnet",
-  "claude-3-haiku",
+  "claude-haiku-4-5-20251001",
+  "claude-sonnet-4-6",
+  "claude-opus-4-6",
 ] as const;
 
 const formSchema = z.object({
@@ -93,7 +92,7 @@ export const AnthropicDialog = ({
     if (open) {
       form.reset({
         variableName: defaultValues.variableName || "",
-        credentialId: defaultValues.credentialId || "", 
+        credentialId: defaultValues.credentialId || "",
         model: defaultValues.model || ANTHROPIC_AVAILABLE_MODELS[0],
         systemPrompt: defaultValues.systemPrompt || "",
         userPrompt: defaultValues.userPrompt || "",
