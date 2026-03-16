@@ -130,6 +130,7 @@ enum NodeType {
   CONTENT_SOURCE
   DISCORD
   SLACK
+  GMAIL
 }
 
 model Node {

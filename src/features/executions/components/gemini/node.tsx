@@ -7,6 +7,7 @@ import { AVAILABLE_MODELS, GeminiDialog, GeminiFormValues } from "./dialog";
 import { useNodeStatus } from "../../hooks/use-node-status";
 import { GEMINI_CHANNEL_NAME } from "@/app/inngest/channels/gemini";
 import { fetchGeminiRealtimeToken } from "./actions";
+
 type GeminiNodeData = {
   variableName?: string;
   credentialId?: string;

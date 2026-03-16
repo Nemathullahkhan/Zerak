@@ -5,8 +5,37 @@ import z from "zod";
 import { PAGINATION } from "@/config/constants";
 import { NodeType } from "@/generated/prisma/client";
 import { Edge, Node } from "@xyflow/react";
-import { inngest } from "@/app/inngest/client";
 import { sendWorkflowExecution } from "@/app/inngest/utils";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { generateText } from "ai";
+
+const SYSTEM_PROMPT = `You are a workflow automation engine. Convert the user's plain-English workflow description into a structured JSON workflow object.
+
+RULES:
+- Return ONLY valid JSON. No explanation, no markdown, no code fences.
+- The workflow MUST always start with a MANUAL_TRIGGER node (data: {}).
+- Chain nodes linearly. Connections always use fromOutput: "source-1" and toInput: "target-1".
+- Space node positions 160px apart horizontally: x: 100, 260, 420, 580... all at y: 100.
+- Each variableName must be unique and camelCase.
+- Name the workflow in kebab-case based on what it does, appended with the current date: "workflow-name-YYYY-MM-DD-HH-MM".
+- Generate a unique nanoid (10 chars, alphanumeric) for each node id.
+- Generate a unique nanoid (10 chars, alphanumeric) for each connection id.
+- Do not include createdAt/updatedAt — the server will set those.
+
+Available node types and their data shapes:
+- MANUAL_TRIGGER: data: {}
+- CONTENT_SOURCE: data: { url: string, variableName: string }
+- HTTP_REQUEST: data: { url: string, method: string, headers: Record<string,string>, variableName: string }
+- ANTHROPIC: data: { model: "claude-3-5-sonnet", userPrompt: string, systemPrompt: string, variableName: string }
+- GEMINI: data: { model: "gemini-2.5-flash", userPrompt: string, systemPrompt: string, variableName: string }
+- SLACK: data: { content: string, webhookUrl: "", variableName: string }
+
+Return shape:
+{
+  "name": "kebab-name-YYYY-MM-DD-HH-MM",
+  "nodes": [ { "id", "name", "type", "data", "position" } ],
+  "connections": [ { "id", "fromNodeId", "fromOutput": "source-1", "toNodeId", "toInput": "target-1" } ]
+}`;
 
 export const workflowsRouter = createTRPCRouter({
   execute: protectedProcedure
@@ -18,14 +47,6 @@ export const workflowsRouter = createTRPCRouter({
           userId: ctx.auth.user.id,
         },
       });
-      // TOBE REMOVED
-      // await inngest.send({
-      //   name: "workflows/execute-workflow",
-      //   data: {
-      //     workflowId: input.id,
-      //   },
-      // });
-
       await sendWorkflowExecution({
         workflowId: input.id,
       });
@@ -131,7 +152,7 @@ export const workflowsRouter = createTRPCRouter({
             toInput: edge.targetHandle || "main",
           })),
         });
-        // update workflow's updatedAt timestamp
+        // update workflow's updatedAt timestamptil
         await tx.workflow.update({
           where: { id },
           data: { updatedAt: new Date() },
@@ -221,5 +242,77 @@ export const workflowsRouter = createTRPCRouter({
         hasNextPage,
         hasPreviousPage,
       };
+    }),
+
+  generateFromPrompt: protectedProcedure
+    .input(z.object({ prompt: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const anthropic = createAnthropic({
+        apiKey: process.env.ANTHROPIC_API_KEY,
+      });
+
+      // Step 1: Get response from Anthropic
+      const { text } = await generateText({
+        model: anthropic("claude-sonnet-4-6"),
+        system: SYSTEM_PROMPT,
+        prompt: input.prompt,
+      });
+      // Step 2: Parse the generated workflow JSON
+      let generated: {
+        name: string;
+        nodes: Array<{
+          id: string;
+          name: string;
+          type: string;
+          data: Record<string, unknown>;
+          position: { x: number; y: number };
+        }>;
+        connections: Array<{
+          id: string;
+          fromNodeId: string;
+          toNodeId: string;
+          fromOutput: string;
+          toInput: string;
+        }>;
+      };
+
+      try {
+        generated = JSON.parse(text);
+      } catch {
+        throw new Error(`Failed to parse generated workflow: ${text}`);
+      }
+
+      // Step 3: Create the workflow in DB
+      const workflow = await prisma.workflow.create({
+        data: {
+          name: generated.name,
+          userId: ctx.auth.user.id,
+          nodes: {
+            createMany: {
+              data: generated.nodes.map((node) => ({
+                id: node.id,
+                name: node.name,
+                type: node.type as NodeType,
+                data: node.data,
+                position: node.position,
+              })),
+            },
+          },
+          connections: {
+            createMany: {
+              data: generated.connections.map((conn) => ({
+                id: conn.id,
+                fromNodeId: conn.fromNodeId,
+                toNodeId: conn.toNodeId,
+                fromOutput: conn.fromOutput,
+                toInput: conn.toInput,
+              })),
+            },
+          },
+        },
+      });
+
+      // Step 4: Return id + raw text so the frontend can display it
+      return { id: workflow.id, name: workflow.name, rawText: text };
     }),
 });
