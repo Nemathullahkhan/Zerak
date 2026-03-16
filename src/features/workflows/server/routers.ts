@@ -152,7 +152,7 @@ export const workflowsRouter = createTRPCRouter({
             toInput: edge.targetHandle || "main",
           })),
         });
-        // update workflow's updatedAt timestamp
+        // update workflow's updatedAt timestamptil
         await tx.workflow.update({
           where: { id },
           data: { updatedAt: new Date() },
