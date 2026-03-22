@@ -1,181 +1,3 @@
-// // src/features/editor/components/execution-context-panel.tsx
-// "use client";
-
-// import { useLastExecution } from "@/features/executions/hooks/use-last-execution";
-// import { Database, Loader2 } from "lucide-react";
-
-// interface ExecutionContextPanelProps {
-//   workflowId: string;
-// }
-
-// export const ExecutionContextPanel = ({
-//   workflowId,
-// }: ExecutionContextPanelProps) => {
-//   const { data, isLoading } = useLastExecution(workflowId);
-
-//   return (
-//     <div className="flex h-full flex-col">
-//       {/* Panel header */}
-//       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-//         <div className="flex items-center gap-2">
-//           <Database className="size-3.5 text-muted-foreground" />
-//           <span className="text-xs font-medium text-muted-foreground">
-//             Execution context
-//           </span>
-//         </div>
-
-//         {data && (
-//           <span
-//             className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${
-//               data.status === "SUCCESS"
-//                 ? "border-green-800/30 bg-green-900/20 text-green-400"
-//                 : "border-red-800/30 bg-red-900/20 text-red-400"
-//             }`}
-//           >
-//             {data.status}
-//           </span>
-//         )}
-//       </div>
-
-//       {/* Body */}
-//       <div className="flex flex-col gap-3 overflow-y-auto p-4">
-//         {isLoading ? (
-//           <div className="flex items-center justify-center gap-2 py-8">
-//             <Loader2 className="size-4 animate-spin text-muted-foreground" />
-//             <span className="text-xs text-muted-foreground">Loading…</span>
-//           </div>
-//         ) : !data || data.groups.length === 0 ? (
-//           <EmptyState />
-//         ) : (
-//           <>
-//             {/* Execution meta */}
-//             <p className="text-[10px] tabular-nums text-muted-foreground">
-//               Last run:{" "}
-//               {new Date(data.startedAt).toLocaleString(undefined, {
-//                 dateStyle: "short",
-//                 timeStyle: "short",
-//               })}
-//             </p>
-
-//             {/* Groups */}
-//             {data.groups.map((group) => (
-//               <NodeGroup key={group.nodeName} group={group} />
-//             ))}
-//           </>
-//         )}
-
-//         {/* Placeholder block */}
-//         <div className="mt-2 rounded-lg border border-dashed border-border px-4 py-5 text-center">
-//           <p className="text-xs text-muted-foreground">
-//             More context sources coming soon
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// // ─── Node Group ───────────────────────────────────────────────────────────────
-
-// type Group = {
-//   nodeName: string;
-//   nodeType: string;
-//   variables: { variableName: string; output: unknown }[];
-// };
-
-// const NodeGroup = ({ group }: { group: Group }) => (
-//   <div className="flex flex-col gap-1.5">
-//     {/* Group header */}
-//     <div className="flex items-center gap-2">
-//       <span className="truncate text-[11px] font-medium text-foreground">
-//         {group.nodeName}
-//       </span>
-//       <span className="shrink-0 rounded border border-border bg-secondary px-1 py-0.5 font-mono text-[9px] text-muted-foreground">
-//         {group.nodeType}
-//       </span>
-//     </div>
-
-//     {/* Variable chips */}
-//     {group.variables.map((v) => (
-//       <VariableChip
-//         key={v.variableName}
-//         variableName={v.variableName}
-//         output={v.output}
-//       />
-//     ))}
-//   </div>
-// );
-
-// // ─── Variable Chip ────────────────────────────────────────────────────────────
-
-// const VariableChip = ({
-//   variableName,
-//   output,
-// }: {
-//   variableName: string;
-//   output: unknown;
-// }) => {
-//   const handleClick = () => {
-//     document.dispatchEvent(
-//       new CustomEvent("zerak:insert-variable", {
-//         detail: { ref: `{{${variableName}}}` },
-//       }),
-//     );
-//   };
-
-//   const preview = formatPreview(output);
-
-//   return (
-//     <button
-//       onClick={handleClick}
-//       className="group flex w-full flex-col gap-0.5 rounded-md border border-border bg-secondary/50 px-3 py-2 text-left transition-all hover:border-border/80 hover:bg-secondary"
-//     >
-//       <div className="flex w-full items-center justify-between">
-//         <span className="font-mono text-[11px] font-medium text-foreground">
-//           {`{{${variableName}}}`}
-//         </span>
-//         <span className="ml-2 shrink-0 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-//           insert
-//         </span>
-//       </div>
-//       {preview && (
-//         <span className=" text-[10px] text-muted-foreground">{preview}</span>
-//       )}
-//     </button>
-//   );
-// };
-
-// // ─── Empty state ──────────────────────────────────────────────────────────────
-
-// const EmptyState = () => (
-//   <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border px-4 py-8 text-center">
-//     <div className="rounded-md border border-border bg-secondary p-2">
-//       <Database className="size-4 text-muted-foreground" />
-//     </div>
-//     <div className="flex flex-col gap-1">
-//       <p className="text-xs font-medium text-foreground">No context yet</p>
-//       <p className="text-xs text-muted-foreground">
-//         Run the full workflow first to see previous node outputs here
-//       </p>
-//     </div>
-//   </div>
-// );
-
-// // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// function formatPreview(output: unknown): string {
-//   if (output === null || output === undefined) return "";
-//   if (typeof output === "string") {
-//     return output.length > 60 ? output.slice(0, 60) + "…" : output;
-//   }
-//   if (typeof output === "object") {
-//     const keys = Object.keys(output as object);
-//     return keys.slice(0, 3).join(", ") + (keys.length > 3 ? "…" : "");
-//   }
-//   return String(output);
-// }
-
-// src/features/editor/components/execution-context-panel.tsx
 "use client";
 
 import { useLastExecution } from "@/features/executions/hooks/use-last-execution";
@@ -367,25 +189,29 @@ const VariableRow = ({
       setIsExpanded((e) => !e);
       return;
     }
+    // Use {{json ...}} for objects/arrays so Handlebars serialises them correctly
+    const ref = isObject ? `{{json ${variableName}}}` : `{{${variableName}}}`;
     document.dispatchEvent(
       new CustomEvent("zerak:insert-variable", {
-        detail: { ref: `{{${variableName}}}` },
+        detail: { ref },
       }),
     );
-  }, [variableName, isExpandable]);
+  }, [variableName, isExpandable, isObject]);
 
   // Drag start — carry variable ref as text
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
-      e.dataTransfer.setData("text/plain", `{{${variableName}}}`);
+      // Use {{json ...}} for objects/arrays so Handlebars serialises them correctly
+      const ref = isObject ? `{{json ${variableName}}}` : `{{${variableName}}}`;
+      e.dataTransfer.setData("text/plain", ref);
       e.dataTransfer.setData(
         "application/zerak-variable",
-        JSON.stringify({ ref: `{{${variableName}}}`, value: output }),
+        JSON.stringify({ ref, value: output }),
       );
       e.dataTransfer.effectAllowed = "copy";
       setIsDragging(true);
     },
-    [variableName, output],
+    [variableName, output, isObject],
   );
 
   const handleDragEnd = useCallback(() => setIsDragging(false), []);
@@ -508,14 +334,16 @@ const ObjectLeaf = ({
   const handleDragStart = useCallback(
     (e: React.DragEvent) => {
       e.stopPropagation();
-      e.dataTransfer.setData("text/plain", `{{${fullKey}}}`);
+      // Use {{json ...}} for objects/arrays so Handlebars serialises them correctly
+      const ref = isObject ? `{{json ${fullKey}}}` : `{{${fullKey}}}`;
+      e.dataTransfer.setData("text/plain", ref);
       e.dataTransfer.setData(
         "application/zerak-variable",
-        JSON.stringify({ ref: `{{${fullKey}}}`, value }),
+        JSON.stringify({ ref, value }),
       );
       e.dataTransfer.effectAllowed = "copy";
     },
-    [fullKey, value],
+    [fullKey, value, isObject],
   );
 
   const handleClick = useCallback(
@@ -525,9 +353,10 @@ const ObjectLeaf = ({
         setIsExpanded((x) => !x);
         return;
       }
+      const ref = `{{${fullKey}}}`;
       document.dispatchEvent(
         new CustomEvent("zerak:insert-variable", {
-          detail: { ref: `{{${fullKey}}}` },
+          detail: { ref },
         }),
       );
     },

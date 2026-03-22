@@ -1,4 +1,3 @@
-// src/features/executions/hooks/use-last-execution.ts
 "use client";
 
 import { executionContextAtom } from "@/features/editor/store/node-execution-atoms";
@@ -9,8 +8,21 @@ import { useEffect } from "react";
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 //
-// Fetches the last SUCCESS or FAILED execution for a workflow and
-// writes its variables into executionContextAtom for the left column.
+// Fetches the last completed execution for a workflow and writes its outputs
+// into executionContextAtom so that "Test Step" passes correct context to
+// downstream executors.
+//
+// The router (getLastForWorkflow) already builds groups with the correct node
+// names and types by joining execution.output with workflow.nodes. This hook
+// is a thin consumer — it does not parse or transform the output itself.
+//
+// Shape written to executionContextAtom:
+//   [{ variableName: "aiNewsContent", output: { httpResponse: {...} } }, ...]
+//
+// Only root-level entries (no dots) are written. The router also includes
+// dot-notation child rows (e.g. "aiNewsContent.httpResponse") for display in
+// the panel, but those are filtered out here so that atomOutputsToContext()
+// in the router produces a clean nested context object without collisions.
 
 export const useLastExecution = (workflowId: string) => {
   const trpc = useTRPC();
@@ -20,17 +32,21 @@ export const useLastExecution = (workflowId: string) => {
     trpc.executions.getLastForWorkflow.queryOptions({ workflowId }),
   );
 
-  // Flatten all groups into NodeExecutionOutput[] for the atom
   useEffect(() => {
     if (!query.data) return;
 
+    // Write only root-level variables (no dots) into the atom.
+    // Dot-notation rows exist for panel display only — the executor context
+    // must only contain top-level keys or child paths will overwrite the parent.
     const outputs = query.data.groups.flatMap((group) =>
-      group.variables.map((v) => ({
-        nodeId: v.variableName, // use variableName as stable id
-        variableName: v.variableName,
-        output: v.output,
-        executedAt: new Date(query.data!.startedAt),
-      })),
+      group.variables
+        .filter((v) => !v.variableName.includes("."))
+        .map((v) => ({
+          nodeId: v.variableName,
+          variableName: v.variableName,
+          output: v.output,
+          executedAt: new Date(query.data!.startedAt),
+        })),
     );
 
     setExecutionContext(outputs);

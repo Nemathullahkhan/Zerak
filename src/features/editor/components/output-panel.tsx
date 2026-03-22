@@ -1,37 +1,64 @@
-// src/features/editor/components/output-panel.tsx
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { NodeExecutionOutput } from "@/features/editor/store/node-execution-atoms";
-import { AlertTriangle, Info, MessageSquare, Terminal } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Info,
+  Loader2,
+  MessageSquare,
+  Terminal,
+} from "lucide-react";
+import { useState } from "react";
 
 interface OutputPanelProps {
   output: NodeExecutionOutput | null;
+  /** nodeId of the node currently open in the middle panel */
+  activeNodeId: string | null;
+  /** true while the executeNode tRPC mutation is in-flight */
+  isExecuting?: boolean;
+  /** true while the saveNode tRPC mutation is in-flight */
+  isSaving?: boolean;
 }
 
-export const OutputPanel = ({ output }: OutputPanelProps) => {
+export const OutputPanel = ({
+  output,
+  activeNodeId,
+  isExecuting = false,
+  isSaving = false,
+}: OutputPanelProps) => {
+  // Only surface output that belongs to the currently-selected node.
+  // Switching nodes hides stale output from the previous one.
+  const visibleOutput =
+    output && activeNodeId && output.nodeId === activeNodeId ? output : null;
+
   return (
     <div className="flex h-full flex-col">
       <Tabs
         defaultValue="output"
         className="flex flex-1 flex-col overflow-hidden"
       >
-        {/* Header — OUTPUT label + icons on left, tab triggers on right */}
+        {/* Header */}
         <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
-          {/* Left: label + optional status icons */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
               Output
             </span>
-            {output && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <AlertTriangle className="size-3 text-yellow-500/70" />
-                <Info className="size-3" />
-              </div>
+
+            {isSaving ? (
+              <SaveIndicator />
+            ) : (
+              visibleOutput && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <AlertTriangle className="size-3 text-yellow-500/70" />
+                  <Info className="size-3" />
+                </div>
+              )
             )}
           </div>
 
-          {/* Right: tab switcher living inside the header */}
           <TabsList className="h-7 gap-0.5 bg-transparent p-0">
             <TabsTrigger
               value="output"
@@ -52,7 +79,13 @@ export const OutputPanel = ({ output }: OutputPanelProps) => {
 
         {/* Output tab */}
         <TabsContent value="output" className="mt-0 flex-1 overflow-y-auto">
-          {output ? <OutputDisplay output={output} /> : <EmptyOutput />}
+          {isExecuting ? (
+            <ExecutingLoader />
+          ) : visibleOutput ? (
+            <OutputDisplay output={visibleOutput} />
+          ) : (
+            <EmptyOutput />
+          )}
         </TabsContent>
 
         {/* Chat tab */}
@@ -79,6 +112,51 @@ export const OutputPanel = ({ output }: OutputPanelProps) => {
   );
 };
 
+// ─── Save indicator ────────────────────────────────────────────────────────────
+
+const SaveIndicator = () => (
+  <div className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-0.5">
+    <Loader2 className="size-3 animate-spin text-muted-foreground" />
+    <span className="text-[10px] text-muted-foreground">Saving…</span>
+  </div>
+);
+
+// ─── Executing loader ──────────────────────────────────────────────────────────
+
+const ExecutingLoader = () => (
+  <div className="flex h-full flex-col">
+    <SkeletonSection />
+    <SkeletonSection rows={4} />
+    <div className="mt-auto flex items-center justify-center gap-2 pb-6 pt-4">
+      <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+      <span className="text-[11px] text-muted-foreground">Running node…</span>
+    </div>
+  </div>
+);
+
+const SkeletonSection = ({ rows = 2 }: { rows?: number }) => (
+  <div className="border-b border-border">
+    <div className="flex items-center gap-2 px-4 py-2.5">
+      <div className="h-2.5 w-2.5 animate-pulse rounded-sm bg-muted" />
+      <div className="h-2.5 w-16 animate-pulse rounded bg-muted" />
+    </div>
+    <div className="flex flex-col gap-2 pb-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center justify-between px-4">
+          <div
+            className="h-2 animate-pulse rounded bg-muted"
+            style={{ width: `${32 + (i % 3) * 12}%` }}
+          />
+          <div
+            className="h-2 animate-pulse rounded bg-muted"
+            style={{ width: `${20 + (i % 2) * 15}%` }}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 // ─── Empty state ───────────────────────────────────────────────────────────────
 
 const EmptyOutput = () => (
@@ -98,12 +176,10 @@ const EmptyOutput = () => (
 // ─── Output display ────────────────────────────────────────────────────────────
 
 const OutputDisplay = ({ output }: { output: NodeExecutionOutput }) => {
-  // Flatten output into displayable rows like n8n does
   const rows = flattenOutput(output.output);
 
   return (
     <div className="flex flex-col">
-      {/* "Other info" section — always shown at top like n8n */}
       <OutputSection title="Other info" defaultOpen>
         <OutputRow label="Variable" value={`{{${output.variableName}}}`} mono />
         <OutputRow
@@ -115,7 +191,6 @@ const OutputDisplay = ({ output }: { output: NodeExecutionOutput }) => {
         />
       </OutputSection>
 
-      {/* Main output section */}
       <OutputSection title="Output" defaultOpen>
         {rows.length > 0 ? (
           rows.map((row) => (
@@ -133,7 +208,6 @@ const OutputDisplay = ({ output }: { output: NodeExecutionOutput }) => {
         )}
       </OutputSection>
 
-      {/* Raw JSON — collapsed by default */}
       <OutputSection title="Raw JSON">
         <pre className="overflow-x-auto whitespace-pre-wrap break-words px-4 py-2 font-mono text-[10px] leading-relaxed text-foreground">
           {JSON.stringify(output.output, null, 2)}
@@ -144,9 +218,6 @@ const OutputDisplay = ({ output }: { output: NodeExecutionOutput }) => {
 };
 
 // ─── Output Section ────────────────────────────────────────────────────────────
-
-import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
 
 const OutputSection = ({
   title,

@@ -1,23 +1,22 @@
-// src/features/executions/hooks/use-execute-node.ts
 "use client";
 
 import {
+  activeNodeAtom,
   executionContextAtom,
+  isExecutingAtom,
   nodeExecutionOutputAtom,
   type NodeExecutionOutput,
 } from "@/features/editor/store/node-execution-atoms";
-import { NodeType } from "@/generated/prisma/enums";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ExecuteNodeParams {
   nodeId: string;
-  nodeType: string;
-  data: Record<string, unknown>;
 }
 
 interface UseExecuteNodeReturn {
@@ -33,9 +32,15 @@ export const useExecuteNode = (): UseExecuteNodeReturn => {
 
   const trpc = useTRPC();
   const setOutput = useSetAtom(nodeExecutionOutputAtom);
+  const setExecutionContext = useSetAtom(executionContextAtom);
   const executionContext = useAtomValue(executionContextAtom);
+  const setIsExecuting = useSetAtom(isExecutingAtom);
 
-  // Matches the exact pattern used in useExecuteWorkflow / useCreateWorkflow
+  // Read workflowId from the URL — always present on the editor page.
+  // This avoids threading it through props or storing it in the atom.
+  const params = useParams();
+  const workflowId = params.workflowId as string;
+
   const { mutateAsync, isPending } = useMutation(
     trpc.executions.executeNode.mutationOptions({
       onError: (err) => {
@@ -45,41 +50,62 @@ export const useExecuteNode = (): UseExecuteNodeReturn => {
   );
 
   const execute = useCallback(
-    async ({ nodeId, nodeType, data }: ExecuteNodeParams) => {
+    async ({ nodeId }: ExecuteNodeParams) => {
       setError(null);
-
-      if (!(Object.values(NodeType) as string[]).includes(nodeType)) {
-        setError(`Unknown node type: ${nodeType}`);
-        return;
-      }
+      setIsExecuting(true);
 
       try {
-        // Build context from left column chips (previous node outputs)
-        const context = executionContext.reduce<Record<string, unknown>>(
-          (acc, item) => ({ ...acc, [item.variableName]: item.output }),
-          {},
-        );
+        // Only pass top-level entries (no dots) — dot-notation rows are display
+        // helpers and must NOT be passed as context keys or they'll overwrite
+        // the parent object with a primitive in atomOutputsToContext().
+        const contextOutputs = executionContext
+          .filter((o) => !o.variableName.includes("."))
+          .map((o) => ({ variableName: o.variableName, output: o.output }));
 
         const result = await mutateAsync({
           nodeId,
-          nodeType: nodeType as NodeType,
-          data,
-          context,
+          workflowId,
+          contextOutputs,
         });
 
-        setOutput({
+        const newOutput: NodeExecutionOutput = {
           nodeId,
           variableName: result.variableName,
           output: result.output,
           executedAt: new Date(),
-        } satisfies NodeExecutionOutput);
+        };
+
+        // Update the right panel (OutputPanel).
+        setOutput(newOutput);
+
+        // Merge result back into executionContextAtom so downstream Test Step
+        // clicks see this node's fresh output instead of stale full-run data.
+        setExecutionContext((prev) => {
+          const exists = prev.some(
+            (o) => o.variableName === result.variableName,
+          );
+          return exists
+            ? prev.map((o) =>
+                o.variableName === result.variableName ? newOutput : o,
+              )
+            : [...prev, newOutput];
+        });
       } catch (err) {
-        // onError above handles toast/state — this catch prevents unhandled
-        // promise rejection from mutateAsync re-throwing
+        // onError above handles state — this prevents unhandled promise rejection
         console.error("[useExecuteNode]", err);
+      } finally {
+        // Always clear — success or error
+        setIsExecuting(false);
       }
     },
-    [executionContext, setOutput, mutateAsync],
+    [
+      workflowId,
+      executionContext,
+      setOutput,
+      setExecutionContext,
+      setIsExecuting,
+      mutateAsync,
+    ],
   );
 
   return {

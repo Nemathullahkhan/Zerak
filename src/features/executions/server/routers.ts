@@ -15,194 +15,178 @@ const createStepShim = () => ({
   sendEvent: async (_id: string, _event: unknown) => {},
   waitForEvent: async (_id: string, _opts: unknown) => null,
   invoke: async (_id: string, _opts: unknown) => null,
+  ai: {
+    wrap: async <T>(
+      _id: string,
+      fn: (opts: any) => Promise<T>,
+      opts: any,
+    ): Promise<T> => fn(opts),
+  },
 });
 
 const publishShim = async (..._args: unknown[]) => {};
 
-// ─── Router ───────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-export const executionsRouter = createTRPCRouter({
-  // ── Last execution for a workflow (feeds left column chips) ─────────────────
-  getLastForWorkflow: protectedProcedure
-    .input(z.object({ workflowId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const execution = await prisma.execution.findFirst({
-        where: {
-          workflowId: input.workflowId,
-          workflow: { userId: ctx.auth.user.id },
-          status: { in: ["SUCCESS", "FAILED"] },
-        },
-        orderBy: { startedAt: "desc" },
-        include: {
-          workflow: {
-            select: {
-              nodes: {
-                select: {
-                  id: true,
-                  name: true,
-                  type: true,
-                  data: true,
-                },
-              },
-            },
-          },
-        },
+function buildGroups(
+  output: Record<string, unknown>,
+  nodes: Array<{ name: string; type: string; data: Record<string, unknown> }>,
+) {
+  const nodeByVariableName = new Map<string, { name: string; type: string }>();
+  for (const node of nodes) {
+    const variableName = node.data?.variableName as string | undefined;
+    if (variableName) {
+      nodeByVariableName.set(variableName, {
+        name: node.name,
+        type: node.type,
       });
+    }
+  }
 
-      if (!execution) return null;
+  return Object.entries(output)
+    .filter(([key]) => key !== "__metadata__")
+    .map(([variableName, value]) => {
+      const nodeInfo = nodeByVariableName.get(variableName);
+      const variables: Array<{ variableName: string; output: unknown }> = [];
 
-      // execution.output is a flat Record<variableName, outputValue>
-      // workflow.nodes lets us match variableName → node name + type
-      const output = (execution.output ?? {}) as Record<string, unknown>;
-      const nodes = execution.workflow.nodes;
+      variables.push({ variableName, output: value });
 
-      // Build a lookup: variableName → { nodeName, nodeType }
-      // Each node stores its variableName inside node.data
-      const variableToNode = nodes.reduce<
-        Record<string, { nodeName: string; nodeType: string }>
-      >((acc, node) => {
-        const data = node.data as Record<string, unknown> | null;
-        const variableName = data?.variableName as string | undefined;
-        if (variableName) {
-          acc[variableName] = {
-            nodeName:
-              node.name && node.name !== "unknown"
-                ? node.name
-                : formatNodeType(node.type),
-            nodeType: node.type,
-          };
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
+        for (const [key, val] of Object.entries(
+          value as Record<string, unknown>,
+        )) {
+          variables.push({
+            variableName: `${variableName}.${key}`,
+            output: val,
+          });
         }
-        return acc;
-      }, {});
-
-      // Build groups: one group per node that has output
-      // Group key = nodeName, value = array of { variableName, output }
-      type OutputGroup = {
-        nodeName: string;
-        nodeType: string;
-        variables: { variableName: string; output: unknown }[];
-      };
-
-      const groupMap = new Map<string, OutputGroup>();
-
-      for (const [variableName, outputValue] of Object.entries(output)) {
-        const nodeInfo = variableToNode[variableName];
-        const nodeName = nodeInfo?.nodeName ?? variableName;
-        const nodeType = nodeInfo?.nodeType ?? "UNKNOWN";
-
-        if (!groupMap.has(nodeName)) {
-          groupMap.set(nodeName, { nodeName, nodeType, variables: [] });
-        }
-        groupMap
-          .get(nodeName)!
-          .variables.push({ variableName, output: outputValue });
       }
 
       return {
-        executionId: execution.id,
+        nodeName: nodeInfo?.name ?? formatVariableName(variableName),
+        nodeType: nodeInfo?.type ?? "UNKNOWN",
+        variables,
+      };
+    });
+}
+
+function atomOutputsToContext(
+  outputs: Array<{ variableName: string; output: unknown }>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    outputs
+      .filter((o) => !o.variableName.includes("."))
+      .map((o) => [o.variableName, o.output]),
+  );
+}
+
+function formatVariableName(name: string): string {
+  return name
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+
+export const executionsRouter = createTRPCRouter({
+  getLastForWorkflow: protectedProcedure
+    .input(z.object({ workflowId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const [execution, workflow] = await Promise.all([
+        prisma.execution.findFirst({
+          where: {
+            workflowId: input.workflowId,
+            workflow: { userId: ctx.auth.user.id },
+            status: { in: ["SUCCESS", "FAILED"] },
+          },
+          orderBy: { startedAt: "desc" },
+        }),
+        prisma.workflow.findUniqueOrThrow({
+          where: {
+            id: input.workflowId,
+            userId: ctx.auth.user.id,
+          },
+          include: { nodes: true },
+        }),
+      ]);
+
+      if (!execution) return null;
+
+      const output = (execution.output ?? {}) as Record<string, unknown>;
+      const nodes = workflow.nodes.map((n) => ({
+        name: n.name,
+        type: n.type as string,
+        data: (n.data ?? {}) as Record<string, unknown>,
+      }));
+
+      return {
         status: execution.status,
-        startedAt: execution.startedAt,
-        completedAt: execution.completedAt,
-        groups: Array.from(groupMap.values()),
+        startedAt: execution.startedAt.toISOString(),
+        groups: buildGroups(output, nodes),
       };
     }),
 
-  // ── Execute a single node directly (no Inngest) ─────────────────────────────
   executeNode: protectedProcedure
     .input(
       z.object({
         nodeId: z.string(),
-        nodeType: z.string(),
-        data: z.any(),
-        context: z.any().optional(),
+        workflowId: z.string(),
+        contextOutputs: z
+          .array(
+            z.object({
+              variableName: z.string(),
+              output: z.unknown(),
+            }),
+          )
+          .default([]),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const { nodeId, nodeType, data } = input;
-      const context = (input.context ?? {}) as Record<string, unknown>;
-
-      const executor = executorRegistry[nodeType as NodeType];
-      if (!executor) {
-        throw new Error(`No executor registered for node type: ${nodeType}`);
-      }
-
-      const result = await executor({
-        data: data as Record<string, unknown>,
-        nodeId,
-        userId: ctx.auth.user.id,
-        context,
-        step: createStepShim() as never,
-        publish: publishShim as never,
+    .mutation(async ({ input, ctx }) => {
+      // findUniqueOrThrow only supports unique fields in `where` — relation
+      // filters are not allowed there. Fetch by id then verify ownership.
+      const node = await prisma.node.findUniqueOrThrow({
+        where: { id: input.nodeId },
+        include: { workflow: true },
       });
 
-      const variableName = (data?.variableName as string | undefined) || nodeId;
+      if (
+        node.workflowId !== input.workflowId ||
+        node.workflow.userId !== ctx.auth.user.id
+      ) {
+        throw new Error("Node not found");
+      }
+
+      const data = node.data as Record<string, unknown>;
+      const variableName = data.variableName as string;
+
+      if (!variableName) {
+        throw new Error(`Node ${input.nodeId} has no variableName in its data`);
+      }
+
+      const executor = executorRegistry[node.type as NodeType];
+
+      if (!executor) {
+        throw new Error(`No executor found for node type: ${node.type}`);
+      }
+
+      const context = atomOutputsToContext(input.contextOutputs);
+
+      const result = await executor({
+        data,
+        nodeId: input.nodeId,
+        userId: ctx.auth.user.id,
+        context,
+        step: createStepShim(),
+        publish: publishShim,
+      });
+
       const output = (result as Record<string, unknown>)[variableName];
 
       return { output, variableName };
     }),
-
-  // ── Get one ─────────────────────────────────────────────────────────────────
-  getOne: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      return prisma.execution.findUniqueOrThrow({
-        where: { id: input.id, workflow: { userId: ctx.auth.user.id } },
-        include: {
-          workflow: { select: { id: true, name: true } },
-        },
-      });
-    }),
-
-  // ── Get many ────────────────────────────────────────────────────────────────
-  getMany: protectedProcedure
-    .input(
-      z.object({
-        page: z.number().default(PAGINATION.DEFAULT_PAGE),
-        pageSize: z
-          .number()
-          .min(PAGINATION.MIN_PAGE_SIZE)
-          .max(PAGINATION.MAX_PAGE_SIZE)
-          .default(PAGINATION.DEFAULT_PAGE_SIZE),
-        search: z.string().default(""),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const { page, pageSize } = input;
-
-      const [items, totalCount] = await Promise.all([
-        prisma.execution.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          where: { workflow: { userId: ctx.auth.user.id } },
-          orderBy: { startedAt: "desc" },
-          include: {
-            workflow: { select: { id: true, name: true } },
-          },
-        }),
-        prisma.execution.count({
-          where: { workflow: { userId: ctx.auth.user.id } },
-        }),
-      ]);
-
-      const totalPages = Math.ceil(totalCount / pageSize);
-
-      return {
-        items,
-        page,
-        pageSize,
-        totalCount,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-      };
-    }),
 });
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatNodeType(type: string): string {
-  return type
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
