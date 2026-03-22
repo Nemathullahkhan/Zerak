@@ -1,83 +1,192 @@
+// src/features/executions/server/routers.ts
 import { prisma } from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+import { executorRegistry } from "@/features/executions/lib/executor-registry";
+import { NodeType } from "@/generated/prisma/enums";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
 
-export const executionsRouter = createTRPCRouter({
-  // GEt one
-  getOne: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(({ ctx, input }) => {
-      return prisma.execution.findUniqueOrThrow({
-        where: { id: input.id, workflow: { userId: ctx.auth.user.id } },
-        include: {
-          workflow: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
-    }),
-  // Get Many
-  getMany: protectedProcedure
-    .input(
-      z.object({
-        page: z.number().default(PAGINATION.DEFAULT_PAGE),
-        pageSize: z
-          .number()
-          .min(PAGINATION.MIN_PAGE_SIZE)
-          .max(PAGINATION.MAX_PAGE_SIZE)
-          .default(PAGINATION.DEFAULT_PAGE_SIZE),
-        search: z.string().default(""),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const { page, pageSize } = input;
+// ─── Step shim ────────────────────────────────────────────────────────────────
 
-      const [items, totalCount] = await Promise.all([
-        prisma.execution.findMany({
-          skip: (page - 1) * pageSize,
-          take: pageSize,
+const createStepShim = () => ({
+  run: async <T>(_id: string, fn: () => Promise<T>): Promise<T> => fn(),
+  sleep: async (_id: string, _duration: unknown) => {},
+  sleepUntil: async (_id: string, _time: unknown) => {},
+  sendEvent: async (_id: string, _event: unknown) => {},
+  waitForEvent: async (_id: string, _opts: unknown) => null,
+  invoke: async (_id: string, _opts: unknown) => null,
+  ai: {
+    wrap: async <T>(
+      _id: string,
+      fn: (opts: any) => Promise<T>,
+      opts: any,
+    ): Promise<T> => fn(opts),
+  },
+});
+
+const publishShim = async (..._args: unknown[]) => {};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildGroups(
+  output: Record<string, unknown>,
+  nodes: Array<{ name: string; type: string; data: Record<string, unknown> }>,
+) {
+  const nodeByVariableName = new Map<string, { name: string; type: string }>();
+  for (const node of nodes) {
+    const variableName = node.data?.variableName as string | undefined;
+    if (variableName) {
+      nodeByVariableName.set(variableName, {
+        name: node.name,
+        type: node.type,
+      });
+    }
+  }
+
+  return Object.entries(output)
+    .filter(([key]) => key !== "__metadata__")
+    .map(([variableName, value]) => {
+      const nodeInfo = nodeByVariableName.get(variableName);
+      const variables: Array<{ variableName: string; output: unknown }> = [];
+
+      variables.push({ variableName, output: value });
+
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
+        for (const [key, val] of Object.entries(
+          value as Record<string, unknown>,
+        )) {
+          variables.push({
+            variableName: `${variableName}.${key}`,
+            output: val,
+          });
+        }
+      }
+
+      return {
+        nodeName: nodeInfo?.name ?? formatVariableName(variableName),
+        nodeType: nodeInfo?.type ?? "UNKNOWN",
+        variables,
+      };
+    });
+}
+
+function atomOutputsToContext(
+  outputs: Array<{ variableName: string; output: unknown }>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    outputs
+      .filter((o) => !o.variableName.includes("."))
+      .map((o) => [o.variableName, o.output]),
+  );
+}
+
+function formatVariableName(name: string): string {
+  return name
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim();
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+
+export const executionsRouter = createTRPCRouter({
+  getLastForWorkflow: protectedProcedure
+    .input(z.object({ workflowId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const [execution, workflow] = await Promise.all([
+        prisma.execution.findFirst({
           where: {
-            workflow: {
-              userId: ctx.auth.user.id,
-            },
+            workflowId: input.workflowId,
+            workflow: { userId: ctx.auth.user.id },
+            status: { in: ["SUCCESS", "FAILED"] },
           },
-          orderBy: {
-            startedAt: "desc",
-          },
-          include: {
-            workflow: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          orderBy: { startedAt: "desc" },
         }),
-        prisma.execution.count({
+        prisma.workflow.findUniqueOrThrow({
           where: {
-            workflow: {
-              userId: ctx.auth.user.id,
-            },
+            id: input.workflowId,
+            userId: ctx.auth.user.id,
           },
+          include: { nodes: true },
         }),
       ]);
 
-      const totalPages = Math.ceil(totalCount / pageSize);
-      const hasNextPage = page < totalPages;
-      const hasPreviousPage = page > 1;
+      if (!execution) return null;
+
+      const output = (execution.output ?? {}) as Record<string, unknown>;
+      const nodes = workflow.nodes.map((n) => ({
+        name: n.name,
+        type: n.type as string,
+        data: (n.data ?? {}) as Record<string, unknown>,
+      }));
 
       return {
-        items,
-        page,
-        pageSize,
-        totalCount,
-        totalPages,
-        hasNextPage,
-        hasPreviousPage,
+        status: execution.status,
+        startedAt: execution.startedAt.toISOString(),
+        groups: buildGroups(output, nodes),
       };
+    }),
+
+  executeNode: protectedProcedure
+    .input(
+      z.object({
+        nodeId: z.string(),
+        workflowId: z.string(),
+        contextOutputs: z
+          .array(
+            z.object({
+              variableName: z.string(),
+              output: z.unknown(),
+            }),
+          )
+          .default([]),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      // findUniqueOrThrow only supports unique fields in `where` — relation
+      // filters are not allowed there. Fetch by id then verify ownership.
+      const node = await prisma.node.findUniqueOrThrow({
+        where: { id: input.nodeId },
+        include: { workflow: true },
+      });
+
+      if (
+        node.workflowId !== input.workflowId ||
+        node.workflow.userId !== ctx.auth.user.id
+      ) {
+        throw new Error("Node not found");
+      }
+
+      const data = node.data as Record<string, unknown>;
+      const variableName = data.variableName as string;
+
+      if (!variableName) {
+        throw new Error(`Node ${input.nodeId} has no variableName in its data`);
+      }
+
+      const executor = executorRegistry[node.type as NodeType];
+
+      if (!executor) {
+        throw new Error(`No executor found for node type: ${node.type}`);
+      }
+
+      const context = atomOutputsToContext(input.contextOutputs);
+
+      const result = await executor({
+        data,
+        nodeId: input.nodeId,
+        userId: ctx.auth.user.id,
+        context,
+        step: createStepShim(),
+        publish: publishShim,
+      });
+
+      const output = (result as Record<string, unknown>)[variableName];
+
+      return { output, variableName };
     }),
 });

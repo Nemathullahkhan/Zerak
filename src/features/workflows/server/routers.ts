@@ -11,8 +11,10 @@ import { generateText } from "ai";
 
 const SYSTEM_PROMPT = `You are a workflow automation engine. Convert the user's plain-English workflow description into a structured JSON workflow object.
 
-RULES:
-- Return ONLY valid JSON. No explanation, no markdown, no code fences.
+CRITICAL RULES:
+- Return ONLY raw valid JSON. DO NOT wrap in markdown code fences (\\\`\\\`\\\`json or \\\`\\\`\\\`)
+- Do NOT include any explanation, markdown, code fences, or extra text before or after the JSON
+- Start your response with { and end with } - nothing else
 - The workflow MUST always start with a MANUAL_TRIGGER node (data: {}).
 - Chain nodes linearly. Connections always use fromOutput: "source-1" and toInput: "target-1".
 - Space node positions 160px apart horizontally: x: 100, 260, 420, 580... all at y: 100.
@@ -28,7 +30,10 @@ Available node types and their data shapes:
 - HTTP_REQUEST: data: { url: string, method: string, headers: Record<string,string>, variableName: string }
 - ANTHROPIC: data: { model: "claude-3-5-sonnet", userPrompt: string, systemPrompt: string, variableName: string }
 - GEMINI: data: { model: "gemini-2.5-flash", userPrompt: string, systemPrompt: string, variableName: string }
+- OPENAI: data: { model: "gpt-4-turbo", userPrompt: string, systemPrompt: string, variableName: string }
 - SLACK: data: { content: string, webhookUrl: "", variableName: string }
+- DISCORD: data: { content: string, webhookUrl: "", variableName: string }
+- GMAIL: data: { to: string, subject: string, body: string, variableName: string }
 
 Return shape:
 {
@@ -52,7 +57,7 @@ export const workflowsRouter = createTRPCRouter({
       });
       return workflow;
     }),
-  // Create workflow
+
   create: protectedProcedure.mutation(({ ctx }) => {
     return prisma.workflow.create({
       data: {
@@ -72,7 +77,7 @@ export const workflowsRouter = createTRPCRouter({
       },
     });
   }),
-  // Delete workflow
+
   remove: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(({ ctx, input }) => {
@@ -83,7 +88,7 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
     }),
-  //// Update Name of workflow
+
   updateName: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string().min(1) }))
     .mutation(({ ctx, input }) => {
@@ -98,7 +103,6 @@ export const workflowsRouter = createTRPCRouter({
       });
     }),
 
-  //// Update  workflow
   update: protectedProcedure
     .input(
       z.object({
@@ -127,11 +131,8 @@ export const workflowsRouter = createTRPCRouter({
         where: { id, userId: ctx.auth.user.id },
       });
 
-      // Transaction to ensure consistency
       return await prisma.$transaction(async (tx) => {
-        // Delete existing nodes and connections
         await tx.node.deleteMany({ where: { workflowId: id } });
-        // Create new nodes
         await tx.node.createMany({
           data: nodes.map((node) => ({
             id: node.id,
@@ -142,7 +143,6 @@ export const workflowsRouter = createTRPCRouter({
             data: node.data || {},
           })),
         });
-        // Create connection
         await tx.connection.createMany({
           data: edges.map((edge) => ({
             workflowId: id,
@@ -152,7 +152,6 @@ export const workflowsRouter = createTRPCRouter({
             toInput: edge.targetHandle || "main",
           })),
         });
-        // update workflow's updatedAt timestamptil
         await tx.workflow.update({
           where: { id },
           data: { updatedAt: new Date() },
@@ -160,7 +159,7 @@ export const workflowsRouter = createTRPCRouter({
         return workflow;
       });
     }),
-  // GEt one
+
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -168,7 +167,7 @@ export const workflowsRouter = createTRPCRouter({
         where: { id: input.id, userId: ctx.auth.user.id },
         include: { nodes: true, connections: true },
       });
-      // Transforming server nodes to react-flow compatible nodes
+
       const nodes: Node[] = workflow.nodes.map((node) => ({
         id: node.id,
         type: node.type,
@@ -176,7 +175,6 @@ export const workflowsRouter = createTRPCRouter({
         data: (node.data as Record<string, unknown>) || {},
       }));
 
-      // Transforming connections to react-flow compatible edges
       const edges: Edge[] = workflow.connections.map((connection) => ({
         id: connection.id,
         source: connection.fromNodeId,
@@ -187,7 +185,7 @@ export const workflowsRouter = createTRPCRouter({
 
       return { id: workflow.id, name: workflow.name, nodes, edges };
     }),
-  // Get Many
+
   getMany: protectedProcedure
     .input(
       z.object({
@@ -251,13 +249,12 @@ export const workflowsRouter = createTRPCRouter({
         apiKey: process.env.ANTHROPIC_API_KEY,
       });
 
-      // Step 1: Get response from Anthropic
       const { text } = await generateText({
         model: anthropic("claude-sonnet-4-6"),
         system: SYSTEM_PROMPT,
         prompt: input.prompt,
       });
-      // Step 2: Parse the generated workflow JSON
+
       let generated: {
         name: string;
         nodes: Array<{
@@ -276,13 +273,18 @@ export const workflowsRouter = createTRPCRouter({
         }>;
       };
 
+      let jsonText = text.trim();
+      const jsonMatch = jsonText.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1];
+      }
+
       try {
-        generated = JSON.parse(text);
+        generated = JSON.parse(jsonText);
       } catch {
         throw new Error(`Failed to parse generated workflow: ${text}`);
       }
 
-      // Step 3: Create the workflow in DB
       const workflow = await prisma.workflow.create({
         data: {
           name: generated.name,
@@ -312,7 +314,6 @@ export const workflowsRouter = createTRPCRouter({
         },
       });
 
-      // Step 4: Return id + raw text so the frontend can display it
       return { id: workflow.id, name: workflow.name, rawText: text };
     }),
 });
