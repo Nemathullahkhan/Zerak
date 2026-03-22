@@ -256,7 +256,7 @@ export const workflowsRouter = createTRPCRouter({
         model: anthropic("claude-sonnet-4-6"),
         system: SYSTEM_PROMPT,
         prompt: input.prompt,
-      });
+    });
       // Step 2: Parse the generated workflow JSON
       let generated: {
         name: string;

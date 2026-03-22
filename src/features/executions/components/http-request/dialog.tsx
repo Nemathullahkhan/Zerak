@@ -97,102 +97,80 @@ export const HttpRequestDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>HTTP Request</DialogTitle>
-          <DialogDescription>
-            Configure settings for the HTTP request node.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8 mt-4"
-          >
-            <FormField
-              control={form.control}
-              name="variableName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Variable Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="myAPiCall" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Use this name to reference the result in other nodes: {`{{`}
-                    <span className="text-neutral-500 font-bold">
-                      {watchVariableName}
-                    </span>
-                    {`.httpResponse.data}}`}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="method"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>HTTP Method</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select HTTP method" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="GET">GET</SelectItem>
-                      <SelectItem value="POST">POST</SelectItem>
-                      <SelectItem value="PUT">PUT</SelectItem>
-                      <SelectItem value="PATCH">PATCH</SelectItem>
-                      <SelectItem value="DELETE">DELETE</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    The HTTP method to use for this request
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endpoint"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Endpoint URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://api.example.com/data"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Static URL or use {"{{variables}}"} for simple values or{" "}
-                    {"{{json variable}}"} to stringify objects
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {showBodyField && (
+      <div className="w-full h-full bg-zinc-50">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>HTTP Request</DialogTitle>
+            <DialogDescription>
+              Configure settings for the HTTP request node.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-8 mt-4"
+            >
               <FormField
                 control={form.control}
-                name="body"
+                name="variableName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Request Body</FormLabel>
+                    <FormLabel>Variable Name</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder={
-                          '{\n "userId": "{{httpResponse.data.id}},\n "name":"{{httpResponse.data.name}}",\n "items":"{{httpResponse.data.items}}"}'
-                        }
-                        className="min-h-[120px] font-mono text-sm"
+                      <Input placeholder="myAPiCall" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Use this name to reference the result in other nodes:{" "}
+                      {`{{`}
+                      <span className="text-neutral-500 font-bold">
+                        {watchVariableName}
+                      </span>
+                      {`.httpResponse.data}}`}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="method"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>HTTP Method</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select HTTP method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="GET">GET</SelectItem>
+                        <SelectItem value="POST">POST</SelectItem>
+                        <SelectItem value="PUT">PUT</SelectItem>
+                        <SelectItem value="PATCH">PATCH</SelectItem>
+                        <SelectItem value="DELETE">DELETE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The HTTP method to use for this request
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endpoint"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Endpoint URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://api.example.com/data"
                         {...field}
                       />
                     </FormControl>
@@ -204,13 +182,38 @@ export const HttpRequestDialog = ({
                   </FormItem>
                 )}
               />
-            )}
-            <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
+              {showBodyField && (
+                <FormField
+                  control={form.control}
+                  name="body"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Request Body</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={
+                            '{\n "userId": "{{httpResponse.data.id}},\n "name":"{{httpResponse.data.name}}",\n "items":"{{httpResponse.data.items}}"}'
+                          }
+                          className="min-h-[120px] font-mono text-sm"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Static URL or use {"{{variables}}"} for simple values or{" "}
+                        {"{{json variable}}"} to stringify objects
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <DialogFooter className="mt-4">
+                <Button type="submit">Save</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </div>
     </Dialog>
   );
 };

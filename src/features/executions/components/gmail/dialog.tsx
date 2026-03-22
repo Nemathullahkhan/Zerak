@@ -1,5 +1,7 @@
+// src/features/executions/components/gmail/dialog.tsx
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -18,11 +19,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -42,23 +43,26 @@ const formSchema = z.object({
 
 export type GmailFormValues = z.infer<typeof formSchema>;
 
-// ─── Props ────────────────────────────────────────────────────────────────────
+// ─── Shared form fields props ─────────────────────────────────────────────────
 
-interface Props {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface GmailFormFieldsProps {
   onSubmit: (values: GmailFormValues) => void;
   defaultValues?: Partial<GmailFormValues>;
+  // When true renders a Save button at the bottom (used in both dialog + layout)
+  showSave?: boolean;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export const GmailDialog = ({
-  open,
-  onOpenChange,
+// ─── GmailFormFields ──────────────────────────────────────────────────────────
+//
+// Pure form — no Dialog shell. Used in two places:
+//   1. GmailDialog wraps it in <DialogContent>
+//   2. GmailNode portals it directly into the layout's middle column
+//
+export const GmailFormFields = ({
   onSubmit,
   defaultValues = {},
-}: Props) => {
+  showSave = true,
+}: GmailFormFieldsProps) => {
   const form = useForm<GmailFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -71,18 +75,147 @@ export const GmailDialog = ({
 
   const watchVariableName = form.watch("variableName") || "myGmail";
 
-  // Re-populate when dialog reopens with saved values
   useEffect(() => {
-    if (open) {
-      form.reset({
-        variableName: defaultValues.variableName ?? "",
-        to: defaultValues.to ?? "",
-        subject: defaultValues.subject ?? "",
-        body: defaultValues.body ?? "",
-      });
-    }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+    form.reset({
+      variableName: defaultValues.variableName ?? "",
+      to: defaultValues.to ?? "",
+      subject: defaultValues.subject ?? "",
+      body: defaultValues.body ?? "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    defaultValues.variableName,
+    defaultValues.to,
+    defaultValues.subject,
+    defaultValues.body,
+  ]);
 
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-5"
+      >
+        <FormField
+          control={form.control}
+          name="variableName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Variable Name</FormLabel>
+              <FormControl>
+                <Input placeholder="myGmail" {...field} />
+              </FormControl>
+              <FormDescription>
+                Reference this node&apos;s result in later nodes:{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  {`{{${watchVariableName}.sent}}`}
+                </code>
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="to"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>To</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="recipient@example.com or {{user.email}}"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Supports{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  {"{{variables}}"}
+                </code>{" "}
+                from previous nodes.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subject</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Your order confirmation or {{order.subject}}"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="body"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Body</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder={
+                    "Hi {{user.name}},\n\nYour order {{order.id}} has been confirmed.\n\nThanks!"
+                  }
+                  className="min-h-[120px] font-mono text-sm"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Use{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  {"{{variables}}"}
+                </code>{" "}
+                for simple values or{" "}
+                <code className="rounded bg-muted px-1 text-xs">
+                  {"{{json variable}}"}
+                </code>{" "}
+                to stringify objects.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {showSave && (
+          <Button type="submit" className="w-full">
+            Save
+          </Button>
+        )}
+      </form>
+    </Form>
+  );
+};
+
+// ─── GmailDialog ──────────────────────────────────────────────────────────────
+//
+// Unchanged behaviour — wraps GmailFormFields in the Dialog shell.
+// Used when opening the node from the canvas directly (legacy path).
+//
+interface GmailDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (values: GmailFormValues) => void;
+  defaultValues?: Partial<GmailFormValues>;
+}
+
+export const GmailDialog = ({
+  open,
+  onOpenChange,
+  onSubmit,
+  defaultValues = {},
+}: GmailDialogProps) => {
   const handleSubmit = (values: GmailFormValues) => {
     onSubmit(values);
     onOpenChange(false);
@@ -100,120 +233,23 @@ export const GmailDialog = ({
             Configure the email this node will send when the workflow runs.
           </DialogDescription>
         </DialogHeader>
-
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-5 mt-2"
+        <GmailFormFields
+          onSubmit={handleSubmit}
+          defaultValues={defaultValues}
+          showSave={false}
+        />
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
           >
-            {/* Variable name */}
-            <FormField
-              control={form.control}
-              name="variableName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Variable Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="myGmail" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Reference this node&apos;s result in later nodes:{" "}
-                    <code className="text-xs bg-muted px-1 rounded">
-                      {`{{${watchVariableName}.sent}}`}
-                    </code>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* To */}
-            <FormField
-              control={form.control}
-              name="to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>To</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="recipient@example.com or {{user.email}}"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Supports{" "}
-                    <code className="text-xs bg-muted px-1 rounded">
-                      {"{{variables}}"}
-                    </code>{" "}
-                    from previous nodes.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Subject */}
-            <FormField
-              control={form.control}
-              name="subject"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Your order confirmation or {{order.subject}}"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Body */}
-            <FormField
-              control={form.control}
-              name="body"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Body</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder={
-                        "Hi {{user.name}},\n\nYour order {{order.id}} has been confirmed.\n\nThanks!"
-                      }
-                      className="min-h-[120px] font-mono text-sm"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Use{" "}
-                    <code className="text-xs bg-muted px-1 rounded">
-                      {"{{variables}}"}
-                    </code>{" "}
-                    for simple values or{" "}
-                    <code className="text-xs bg-muted px-1 rounded">
-                      {"{{json variable}}"}
-                    </code>{" "}
-                    to stringify objects.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Save</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            Cancel
+          </Button>
+          <Button form="gmail-form" type="submit">
+            Save
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
