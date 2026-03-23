@@ -21,6 +21,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { editorAtom } from "../store/atoms";
 
+import { ScheduleButton } from "@/features/schedule/schedule-button";
+
 export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
   const editor = useAtomValue(editorAtom);
   const saveWorkflow = useUpdateWorkflow();
@@ -35,6 +37,7 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
   };
   return (
     <div className="ml-auto">
+      <ScheduleButton workflowId={workflowId} />
       <Button size="sm" onClick={handleSave} disabled={saveWorkflow.isPending}>
         <SaveIcon className="size-4" />
         Save
