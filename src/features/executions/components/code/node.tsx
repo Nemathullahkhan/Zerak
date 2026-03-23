@@ -6,7 +6,7 @@ import { useNodeFormPortal } from "@/features/editor/hooks/use-node-form-portal"
 import { activeNodeAtom } from "@/features/editor/store/node-execution-atoms";
 import { useExecuteNode } from "@/features/executions/hooks/use-execute-node";
 import { useNodeStatus } from "@/features/executions/hooks/use-node-status";
-import { IF_CONDITION_CHANNEL_NAME } from "@/app/inngest/channels/if-condition";
+import { CODE_CHANNEL_NAME } from "@/app/inngest/channels/code";
 import {
   Handle,
   Position,
@@ -15,26 +15,24 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { useSetAtom } from "jotai";
-import { GitBranch } from "lucide-react";
+import { Code2 } from "lucide-react";
 import { memo, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { fetchIfConditionRealtimeToken } from "./actions";
-import { IfFormFields, type IfFormValues } from "./form-fields";
+import { fetchCodeRealtimeToken } from "./actions";
+import { CodeFormFields, type CodeFormValues } from "./form-fields";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type IfNodeData = {
+type CodeNodeData = {
   variableName?: string;
-  condition?: string;
-  trueLabel?: string;
-  falseLabel?: string;
+  code?: string;
 };
 
-type IfNodeType = Node<IfNodeData>;
+type CodeNodeType = Node<CodeNodeData>;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export const IfConditionNode = memo((props: NodeProps<IfNodeType>) => {
+export const CodeNode = memo((props: NodeProps<CodeNodeType>) => {
   const setActiveNode = useSetAtom(activeNodeAtom);
   const { setNodes } = useReactFlow();
   const { portal } = useNodeFormPortal(props.id);
@@ -44,16 +42,15 @@ export const IfConditionNode = memo((props: NodeProps<IfNodeType>) => {
 
   const nodeStatus = useNodeStatus({
     nodeId: props.id,
-    channel: IF_CONDITION_CHANNEL_NAME,
+    channel: CODE_CHANNEL_NAME,
     topic: "status",
-    refreshToken: fetchIfConditionRealtimeToken,
+    refreshToken: fetchCodeRealtimeToken,
   });
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSubmit = useCallback(
-    (values: IfFormValues) => {
-      console.log("Clicked here on save button");
+    (values: CodeFormValues) => {
       setNodes((nodes) =>
         nodes.map((node) =>
           node.id === props.id
@@ -72,36 +69,34 @@ export const IfConditionNode = memo((props: NodeProps<IfNodeType>) => {
   const handleOpen = useCallback(() => {
     setActiveNode({
       id: props.id,
-      type: props.type ?? "IF",
+      type: props.type ?? "CODE",
       workflowId,
       data: props.data as Record<string, unknown>,
     });
   }, [props.id, props.type, props.data, workflowId, setActiveNode]);
 
-  const description = props.data?.condition
-    ? props.data.condition.length > 30
-      ? props.data.condition.slice(0, 30) + "…"
-      : props.data.condition
+  const description = props.data?.variableName
+    ? `return → ${props.data.variableName}`
     : "Not configured";
+
+  const defaultValues: CodeFormValues = {
+    variableName: props.data?.variableName ?? "result",
+    code: props.data?.code ?? "",
+  };
 
   return (
     <>
       {portal(
         <NodeFormShell
-          iconEmoji=" - "
-          title="If condition"
+          iconEmoji="</>"
+          title="Code"
           isRunning={isRunning}
           onRun={handleRun}
           error={error}
         >
-          <IfFormFields
+          <CodeFormFields
             onSubmit={handleSubmit}
-            defaultValues={{
-              variableName: props.data?.variableName ?? "condition",
-              condition: props.data?.condition ?? "",
-              trueLabel: props.data?.trueLabel ?? "",
-              falseLabel: props.data?.falseLabel ?? "",
-            }}
+            defaultValues={defaultValues}
           />
         </NodeFormShell>,
       )}
@@ -111,47 +106,17 @@ export const IfConditionNode = memo((props: NodeProps<IfNodeType>) => {
       <BaseExecutionNode
         {...props}
         id={props.id}
-        icon={GitBranch}
-        name="If condition"
+        icon={Code2}
+        name="Code"
         description={description}
         status={nodeStatus}
         onSettings={handleOpen}
         onDoubleClick={handleOpen}
       />
 
-      {/* True branch — top-right handle with green pill */}
-      <div
-        className="absolute right-0 flex translate-x-full items-center gap-1.5"
-        style={{ top: "calc(35% - 8px)" }}
-      >
-        <span className="whitespace-nowrap rounded border border-green-200 bg-green-50 px-1 py-0 text-[7px] font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300 ml-4">
-          true
-        </span>
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="true"
-          className="!relative !right-auto !top-auto !translate-y-0"
-        />
-      </div>
-
-      {/* False branch — bottom-right handle with red pill */}
-      <div
-        className="absolute right-0 flex translate-x-full items-center gap-1.5"
-        style={{ top: "calc(65% - 8px)" }}
-      >
-        <span className="whitespace-nowrap rounded border border-red-200 bg-red-50 px-1 py-0 text-[7px] font-medium text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400 ml-4 mt-2">
-          false
-        </span>
-        <Handle
-          type="source"
-          position={Position.Right}
-          id="false"
-          className="!relative !right-auto !top-auto !translate-y-0"
-        />
-      </div>
+      <Handle type="source" position={Position.Right} id="source-1" />
     </>
   );
 });
 
-IfConditionNode.displayName = "IfConditionNode";
+CodeNode.displayName = "CodeNode";

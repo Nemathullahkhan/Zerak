@@ -192,6 +192,9 @@ const NODE_TYPE_ICONS: Record<string, string> = {
   STRIPE_TRIGGER: "💳",
   MANUAL_TRIGGER: "▶️",
   CONTENT_SOURCE: "📄",
+  IF: "🔀",
+  SWITCH: "🔀",
+  CODE: "</>",
 };
 
 const NodeGroup = ({

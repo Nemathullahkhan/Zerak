@@ -1,10 +1,12 @@
 import { anthropicChannel } from "@/app/inngest/channels/anthropic";
+import { codeChannel } from "@/app/inngest/channels/code";
 import { contentSourceChannel } from "@/app/inngest/channels/content-source";
 import { discordChannel } from "@/app/inngest/channels/discord";
 import { geminiChannel } from "@/app/inngest/channels/gemini";
 import { googleFormTriggerChannel } from "@/app/inngest/channels/google-form-trigger";
 import { httpRequestChannel } from "@/app/inngest/channels/http-request";
 import { manualTriggerChannel } from "@/app/inngest/channels/manual-trigger";
+import { switchChannel } from "@/app/inngest/channels/switch";
 import { inngest } from "@/app/inngest/client";
 import { topologicalSort } from "@/app/inngest/utils";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
@@ -40,6 +42,8 @@ export const executeWorkflow = inngest.createFunction(
       geminiChannel(),
       discordChannel(),
       anthropicChannel(),
+      switchChannel(),
+      codeChannel(),
     ],
   },
   async ({ event, step, publish }) => {
@@ -115,39 +119,47 @@ export const executeWorkflow = inngest.createFunction(
         step,
         publish,
       });
-g
+
       // After executing, check if this node set a branch decision
       const branchMeta = (context as Record<string, unknown>).__branch__ as
-        | { type: string; taken: string }
+        | { type: string; taken: string; cases?: string[] }
         | undefined;
 
-      if (branchMeta?.type === "if") {
-        const takenHandle = branchMeta.taken; // "true" or "false"
-        const skippedHandle = takenHandle === "true" ? "false" : "true";
+      if (branchMeta?.type === "if" || branchMeta?.type === "switch") {
+        const takenHandle = branchMeta.taken;
 
-        // Find all nodes directly connected via the non-taken branch handle
+        // Build the list of handles that are NOT taken
+        let skippedHandles: string[];
+        if (branchMeta.type === "if") {
+          skippedHandles = [takenHandle === "true" ? "false" : "true"];
+        } else {
+          // SWITCH: skip every case handle except the taken one (including "default")
+          const allHandles = [...(branchMeta.cases ?? []), "default"];
+          skippedHandles = allHandles.filter((h) => h !== takenHandle);
+        }
+
+        // Find all nodes directly connected via any non-taken handle
         const skippedDirectChildren = connections
           .filter(
-            (c) => c.fromNodeId === node.id && c.fromOutput === skippedHandle,
+            (c) =>
+              c.fromNodeId === node.id &&
+              skippedHandles.includes(c.fromOutput),
           )
           .map((c) => c.toNodeId);
 
         // Transitively collect all descendants of the skipped children
-        // (stop at nodes that are also reachable from the taken branch — not
-        // implemented here for simplicity; linear branches skip cleanly)
         const queue = [...skippedDirectChildren];
         while (queue.length > 0) {
           const id = queue.shift()!;
           if (skippedNodeIds.has(id)) continue;
           skippedNodeIds.add(id);
-          // Enqueue children of id that aren't also reached from another node
           const children = connections
             .filter((c) => c.fromNodeId === id)
             .map((c) => c.toNodeId);
           queue.push(...children);
         }
 
-        // Clear the branch flag from context so it doesn't confuse downstream nodes
+        // Clear the branch flag from context so downstream nodes don't see it
         const { __branch__, ...rest } = context as Record<string, unknown>;
         void __branch__;
         context = rest;

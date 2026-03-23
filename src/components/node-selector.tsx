@@ -72,6 +72,22 @@ const executionNodes: NodeTypeOption[] = [
     icon: GitBranch,
   },
   {
+    type: NodeType.SWITCH,
+    label: "Switch",
+    description:
+      "Conditional Statement that helps your navigate your workflow.",
+    icon: GitBranch,
+  },
+  {
+    type: NodeType.CODE,
+    label: "Code",
+    description:
+      "Write js code.",
+    icon: GitBranch,
+  },
+  
+  
+  {
     type: NodeType.GEMINI,
     label: "Gemini",
     description: "Uses Google Gemini to generate text",
