@@ -91,8 +91,18 @@ export const useExecuteNode = (): UseExecuteNodeReturn => {
             : [...prev, newOutput];
         });
       } catch (err) {
-        // onError above handles state — this prevents unhandled promise rejection
-        console.error("[useExecuteNode]", err);
+        // Write a failed output so the right panel shows the error instead of
+        // going blank. The error string comes from the tRPC error message.
+        const errorMessage =
+          err instanceof Error ? err.message : String(err);
+        const failedOutput: NodeExecutionOutput = {
+          nodeId,
+          variableName: "__error__",
+          output: null,
+          executedAt: new Date(),
+          error: errorMessage,
+        };
+        setOutput(failedOutput);
       } finally {
         // Always clear — success or error
         setIsExecuting(false);

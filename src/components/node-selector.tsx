@@ -5,7 +5,12 @@ import { useReactFlow } from "@xyflow/react";
 
 import { NodeType } from "@/generated/prisma/enums";
 
-import { GlobeIcon, MousePointerIcon, VideoIcon } from "lucide-react";
+import {
+  GitBranch,
+  GlobeIcon,
+  MousePointerIcon,
+  VideoIcon,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -59,6 +64,29 @@ const executionNodes: NodeTypeOption[] = [
     description: "Make an HTTP request to an API endpoint",
     icon: GlobeIcon,
   },
+  {
+    type: NodeType.IF,
+    label: "IF Condition",
+    description:
+      "Conditional Statement that helps your navigate your workflow.",
+    icon: GitBranch,
+  },
+  {
+    type: NodeType.SWITCH,
+    label: "Switch",
+    description:
+      "Conditional Statement that helps your navigate your workflow.",
+    icon: GitBranch,
+  },
+  {
+    type: NodeType.CODE,
+    label: "Code",
+    description:
+      "Write js code.",
+    icon: GitBranch,
+  },
+  
+  
   {
     type: NodeType.GEMINI,
     label: "Gemini",

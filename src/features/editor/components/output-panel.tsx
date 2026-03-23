@@ -10,6 +10,7 @@ import {
   Loader2,
   MessageSquare,
   Terminal,
+  XCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -81,6 +82,8 @@ export const OutputPanel = ({
         <TabsContent value="output" className="mt-0 flex-1 overflow-y-auto">
           {isExecuting ? (
             <ExecutingLoader />
+          ) : visibleOutput?.error ? (
+            <ErrorOutput error={visibleOutput.error} />
           ) : visibleOutput ? (
             <OutputDisplay output={visibleOutput} />
           ) : (
@@ -154,6 +157,23 @@ const SkeletonSection = ({ rows = 2 }: { rows?: number }) => (
         </div>
       ))}
     </div>
+  </div>
+);
+
+// ─── Error state ───────────────────────────────────────────────────────────────
+
+const ErrorOutput = ({ error }: { error: string }) => (
+  <div className="flex h-full flex-col">
+    <div className="flex w-full items-start gap-3 border-b border-destructive/20 bg-destructive/10 px-4 py-3">
+      <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-medium text-destructive">Node failed</p>
+        <p className="break-words font-mono text-[11px] text-destructive/80">{error}</p>
+      </div>
+    </div>
+    <p className="px-4 py-3 text-[11px] text-muted-foreground">
+      Fix the error above and click Test Step again.
+    </p>
   </div>
 );
 

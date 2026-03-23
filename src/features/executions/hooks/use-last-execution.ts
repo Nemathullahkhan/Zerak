@@ -35,21 +35,29 @@ export const useLastExecution = (workflowId: string) => {
   useEffect(() => {
     if (!query.data) return;
 
-    // Write only root-level variables (no dots) into the atom.
-    // Dot-notation rows exist for panel display only — the executor context
-    // must only contain top-level keys or child paths will overwrite the parent.
-    const outputs = query.data.groups.flatMap((group) =>
-      group.variables
-        .filter((v) => !v.variableName.includes("."))
-        .map((v) => ({
-          nodeId: v.variableName,
-          variableName: v.variableName,
-          output: v.output,
-          executedAt: new Date(query.data!.startedAt),
-        })),
-    );
+    // Merge DB data INTO the atom — don't overwrite it.
+    // Test step results (written by useExecuteNode) are fresher than DB data.
+    // We only backfill variables that the atom doesn't already have.
+    setExecutionContext((prev) => {
+      const existingVars = new Set(prev.map((o) => o.variableName));
 
-    setExecutionContext(outputs);
+      const dbOutputs = query.data!.groups.flatMap((group) =>
+        group.variables
+          .filter(
+            (v) =>
+              !v.variableName.includes(".") &&
+              !existingVars.has(v.variableName),
+          )
+          .map((v) => ({
+            nodeId: v.variableName,
+            variableName: v.variableName,
+            output: v.output,
+            executedAt: new Date(query.data!.startedAt),
+          })),
+      );
+
+      return [...prev, ...dbOutputs];
+    });
   }, [query.data, setExecutionContext]);
 
   return query;

@@ -14,6 +14,8 @@ export type NodeExecutionOutput = {
   variableName: string;
   output: unknown;
   executedAt: Date;
+  /** Set when the test step failed — output will be null/undefined */
+  error?: string;
 };
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────

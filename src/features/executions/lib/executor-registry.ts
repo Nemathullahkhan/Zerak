@@ -10,6 +10,9 @@ import { AnthropicExecutor } from "../components/anthropic/executor";
 import { discordExecutor } from "../components/discord/executor";
 import { slackExecutor } from "../components/slack/executor";
 import { gmailExecutor } from "../components/gmail/executor";
+import { ifConditionExecutor } from "../components/if-condition/executor";
+import { switchExecutor } from "../components/switch/executor";
+import { codeExecutor } from "../components/code/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.INITIAL]: manualTriggerExecutor,
@@ -24,6 +27,9 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,
   [NodeType.GMAIL]: gmailExecutor,
+  [NodeType.IF]: ifConditionExecutor,
+  [NodeType.CODE]: codeExecutor,
+  [NodeType.SWITCH]: switchExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {
