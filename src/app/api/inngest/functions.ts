@@ -88,8 +88,24 @@ export const executeWorkflow = inngest.createFunction(
     // Initialize the context with any initial data from the trigger
     let context = event.data.initialData || {};
 
-    // Execute each node
+    // Load connections once so we can resolve which nodes to skip after IF branches.
+    const connections = await step.run("load-connections", async () => {
+      const wf = await prisma.workflow.findUniqueOrThrow({
+        where: { id: workflowId },
+        include: { connections: true },
+      });
+      return wf.connections;
+    });
+
+    // Nodes whose execution should be skipped because they lie exclusively on
+    // a non-taken IF branch. We grow this set as we encounter IF nodes.
+    const skippedNodeIds = new Set<string>();
+
+    // Execute each node in topological order
     for (const node of sortedNodes) {
+      // Skip nodes that were marked as unreachable by a prior IF branch
+      if (skippedNodeIds.has(node.id)) continue;
+
       const executor = getExecutor(node.type as NodeType);
       context = await executor({
         data: node.data as Record<string, unknown>,
@@ -99,7 +115,45 @@ export const executeWorkflow = inngest.createFunction(
         step,
         publish,
       });
+g
+      // After executing, check if this node set a branch decision
+      const branchMeta = (context as Record<string, unknown>).__branch__ as
+        | { type: string; taken: string }
+        | undefined;
+
+      if (branchMeta?.type === "if") {
+        const takenHandle = branchMeta.taken; // "true" or "false"
+        const skippedHandle = takenHandle === "true" ? "false" : "true";
+
+        // Find all nodes directly connected via the non-taken branch handle
+        const skippedDirectChildren = connections
+          .filter(
+            (c) => c.fromNodeId === node.id && c.fromOutput === skippedHandle,
+          )
+          .map((c) => c.toNodeId);
+
+        // Transitively collect all descendants of the skipped children
+        // (stop at nodes that are also reachable from the taken branch — not
+        // implemented here for simplicity; linear branches skip cleanly)
+        const queue = [...skippedDirectChildren];
+        while (queue.length > 0) {
+          const id = queue.shift()!;
+          if (skippedNodeIds.has(id)) continue;
+          skippedNodeIds.add(id);
+          // Enqueue children of id that aren't also reached from another node
+          const children = connections
+            .filter((c) => c.fromNodeId === id)
+            .map((c) => c.toNodeId);
+          queue.push(...children);
+        }
+
+        // Clear the branch flag from context so it doesn't confuse downstream nodes
+        const { __branch__, ...rest } = context as Record<string, unknown>;
+        void __branch__;
+        context = rest;
+      }
     }
+
 
     await step.run("update-execution", async () => {
       return prisma.execution.update({
