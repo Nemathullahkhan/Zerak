@@ -131,6 +131,9 @@ enum NodeType {
   DISCORD
   SLACK
   GMAIL
+  IF
+  SWITCH
+  CODE
 }
 
 model Node {

@@ -5,6 +5,7 @@ import { DiscordNode } from "@/features/executions/components/discord/node";
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { GmailNode } from "@/features/executions/components/gmail/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
+import { IfConditionNode } from "@/features/executions/components/if-condition/node";
 import { OpenAiNode } from "@/features/executions/components/openai/node";
 import { SlackNode } from "@/features/executions/components/slack/node";
 import { GoogleFormTrigger } from "@/features/triggers/components/google-form-trigger/node";
@@ -17,6 +18,7 @@ export const nodeComponents = {
   [NodeType.INITIAL]: InitialNode,
   [NodeType.MANUAL_TRIGGER]: ManualTriggerNode,
   [NodeType.HTTP_REQUEST]: HttpRequestNode,
+  [NodeType.IF]: IfConditionNode,
   [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTrigger,
   [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
   [NodeType.GEMINI]: GeminiNode,

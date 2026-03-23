@@ -1,6 +1,7 @@
 "use client";
 
 import { useLastExecution } from "@/features/executions/hooks/use-last-execution";
+import { executionContextAtom } from "@/features/editor/store/node-execution-atoms";
 import {
   ChevronDown,
   ChevronRight,
@@ -11,7 +12,8 @@ import {
   AlignLeft,
   Braces,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useAtomValue } from "jotai";
 
 interface ExecutionContextPanelProps {
   workflowId: string;
@@ -21,10 +23,96 @@ export const ExecutionContextPanel = ({
   workflowId,
 }: ExecutionContextPanelProps) => {
   const { data, isLoading } = useLastExecution(workflowId);
+  const atomOutputs = useAtomValue(executionContextAtom);
+
+  // Merge atom (test step) outputs on top of DB groups.
+  // Priority: atom data wins over stale DB data for the same variableName.
+  // Variables only in the atom (no full run yet) appear as a "Test run" group.
+  const mergedGroups = useMemo(() => {
+    // Start from DB groups (deep-cloned so we can mutate safely)
+    const groups: Group[] = (data?.groups ?? []).map((g) => ({
+      ...g,
+      variables: g.variables.map((v) => ({ ...v })),
+    }));
+
+    // Only root-level atom entries (no dots) carry actual node outputs
+    const rootAtomOutputs = atomOutputs.filter(
+      (o) => !o.variableName.includes("."),
+    );
+
+    const unmatched: typeof rootAtomOutputs = [];
+
+    for (const atomEntry of rootAtomOutputs) {
+      // Try to find an existing group whose root variable matches
+      let matched = false;
+      for (const group of groups) {
+        const rootVar = group.variables.find(
+          (v) =>
+            v.variableName === atomEntry.variableName ||
+            v.variableName === atomEntry.variableName.split(".")[0],
+        );
+        if (rootVar) {
+          // Override the output with the fresher atom version
+          rootVar.output = atomEntry.output;
+          // Also update any dot-notation children to reflect fresh data
+          if (
+            atomEntry.output !== null &&
+            typeof atomEntry.output === "object" &&
+            !Array.isArray(atomEntry.output)
+          ) {
+            const childPrefix = `${atomEntry.variableName}.`;
+            const freshObj = atomEntry.output as Record<string, unknown>;
+            // Remove stale children, rebuild from fresh output
+            const nonChildren = group.variables.filter(
+              (v) => !v.variableName.startsWith(childPrefix),
+            );
+            const freshChildren = Object.entries(freshObj).map(([k, v]) => ({
+              variableName: `${atomEntry.variableName}.${k}`,
+              output: v,
+            }));
+            group.variables = [...nonChildren, ...freshChildren];
+          }
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) unmatched.push(atomEntry);
+    }
+
+    // Variables from test steps that have no DB group yet → one combined group
+    if (unmatched.length > 0) {
+      const variables: Group["variables"] = [];
+      for (const entry of unmatched) {
+        variables.push({ variableName: entry.variableName, output: entry.output });
+        // Add dot-notation children if the output is an object
+        if (
+          entry.output !== null &&
+          typeof entry.output === "object" &&
+          !Array.isArray(entry.output)
+        ) {
+          for (const [k, v] of Object.entries(
+            entry.output as Record<string, unknown>,
+          )) {
+            variables.push({
+              variableName: `${entry.variableName}.${k}`,
+              output: v,
+            });
+          }
+        }
+      }
+      groups.push({
+        nodeName: "Test run",
+        nodeType: "UNKNOWN",
+        variables,
+      });
+    }
+
+    return groups;
+  }, [data, atomOutputs]);
 
   return (
     <div className="flex h-full flex-col">
-      {/* Panel header — mirrors n8n INPUT label style */}
+      {/* Panel header */}
       <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-4">
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -33,10 +121,9 @@ export const ExecutionContextPanel = ({
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Item count badge */}
-          {data && data.groups.length > 0 && (
+          {mergedGroups.length > 0 && (
             <span className="text-[10px] text-muted-foreground">
-              {data.groups.length} item{data.groups.length !== 1 ? "s" : ""}
+              {mergedGroups.length} item{mergedGroups.length !== 1 ? "s" : ""}
             </span>
           )}
           {data && (
@@ -60,11 +147,11 @@ export const ExecutionContextPanel = ({
             <Loader2 className="size-4 animate-spin text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Loading…</span>
           </div>
-        ) : !data || data.groups.length === 0 ? (
+        ) : mergedGroups.length === 0 ? (
           <EmptyState />
         ) : (
           <>
-            {data.groups.map((group, index) => (
+            {mergedGroups.map((group, index) => (
               <NodeGroup
                 key={group.nodeName}
                 group={group}
@@ -410,7 +497,7 @@ const EmptyState = () => (
     <div className="flex flex-col gap-1">
       <p className="text-xs font-medium text-foreground">No context yet</p>
       <p className="text-xs text-muted-foreground">
-        Run the full workflow first to see previous node outputs here
+        Test a node above, or run the full workflow to populate context
       </p>
     </div>
   </div>
