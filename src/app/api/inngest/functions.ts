@@ -113,12 +113,12 @@ export const scheduledWorkflowPoller = inngest.createFunction(
 export const executeWorkflow = inngest.createFunction(
   {
     id: "execute-workflow",
-    retries: 0,
-    onFailure: async ({ event }) => {
-      const workflowId = event.data.event?.data?.workflowId as string | undefined;
-
-      await prisma.execution.update({
-        where: { inngestEventId: event.data.event.id },
+    retries: 0, // TODO: REMOVE IN PRODUCTION
+    onFailure: async ({ event, step }) => {
+      return prisma.execution.update({
+        where: {
+          inngestEventId: event.data.event.id,
+        },
         data: {
           status: ExecutionStatus.FAILED,
           error: event.data.error.message,
