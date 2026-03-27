@@ -17,7 +17,7 @@ export const getGoogleToken = async ({ userId }: { userId: string }) => {
     account.accessTokenExpiresAt.getTime() < Date.now() + 5 * 60 * 1000;
 
   if (isExpired) {
-    if (!account.refreshToken) throw new Error("No refresh token available");
+    if (!account.refreshToken) throw new Error("No refresh token available, Please Refresh this page again or login again");
     return await refreshGoogleToken(account.id, account.refreshToken);
   }
 

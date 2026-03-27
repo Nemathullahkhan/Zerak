@@ -9,12 +9,45 @@ import { sendWorkflowExecution } from "@/app/inngest/utils";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 
+
+
+// CRITICAL RULES:
+// - Return ONLY raw valid JSON. DO NOT wrap in markdown code fences (\\\`\\\`\\\`json or \\\`\\\`\\\`)
+// - Do NOT include any explanation, markdown, code fences, or extra text before or after the JSON
+// - Start your response with { and end with } - nothing else
+// - The workflow MUST always start with a MANUAL_TRIGGER node (data: {}).
+// - Chain nodes linearly. Connections always use fromOutput: "source-1" and toInput: "target-1".
+// - Space node positions 160px apart horizontally: x: 100, 260, 420, 580... all at y: 100.
+// - Each variableName must be unique and camelCase.
+// - Name the workflow in kebab-case based on what it does, appended with the current date: "workflow-name-YYYY-MM-DD-HH-MM".
+// - Generate a unique nanoid (10 chars, alphanumeric) for each node id.
+// - Generate a unique nanoid (10 chars, alphanumeric) for each connection id.
+// - Do not include createdAt/updatedAt — the server will set those.
+
+// Available node types and their data shapes:
+// - MANUAL_TRIGGER: data: {}
+// - CONTENT_SOURCE: data: { url: string, variableName: string }
+// - HTTP_REQUEST: data: { url: string, method: string, headers: Record<string,string>, variableName: string }
+// - ANTHROPIC: data: { model: "claude-3-5-sonnet", userPrompt: string, systemPrompt: string, variableName: string }
+// - GEMINI: data: { model: "gemini-2.5-flash", userPrompt: string, systemPrompt: string, variableName: string }
+// - OPENAI: data: { model: "gpt-4-turbo", userPrompt: string, systemPrompt: string, variableName: string }
+// - SLACK: data: { content: string, webhookUrl: "", variableName: string }
+// - DISCORD: data: { content: string, webhookUrl: "", variableName: string }
+// - GMAIL: data: { to: string, subject: string, body: string, variableName: string }
+
+// Return shape:
+// {
+//   "name": "kebab-name-YYYY-MM-DD-HH-MM",
+//   "nodes": [ { "id", "name", "type", "data", "position" } ],
+//   "connections": [ { "id", "fromNodeId", "fromOutput": "source-1", "toNodeId", "toInput": "target-1" } ]
+// }`;
+
 const SYSTEM_PROMPT = `You are a workflow automation engine. Convert the user's plain-English workflow description into a structured JSON workflow object.
 
 CRITICAL RULES:
-- Return ONLY raw valid JSON. DO NOT wrap in markdown code fences (\\\`\\\`\\\`json or \\\`\\\`\\\`)
-- Do NOT include any explanation, markdown, code fences, or extra text before or after the JSON
-- Start your response with { and end with } - nothing else
+- Return ONLY raw valid JSON. DO NOT wrap in markdown code fences (no triple backticks, no "json" tag).
+- Do NOT include any explanation, markdown, code fences, or extra text before or after the JSON.
+- Start your response with { and end with } - nothing else.
 - The workflow MUST always start with a MANUAL_TRIGGER node (data: {}).
 - Chain nodes linearly. Connections always use fromOutput: "source-1" and toInput: "target-1".
 - Space node positions 160px apart horizontally: x: 100, 260, 420, 580... all at y: 100.
@@ -23,23 +56,118 @@ CRITICAL RULES:
 - Generate a unique nanoid (10 chars, alphanumeric) for each node id.
 - Generate a unique nanoid (10 chars, alphanumeric) for each connection id.
 - Do not include createdAt/updatedAt — the server will set those.
+- ALL fields in each node's data object are REQUIRED. Never omit a field. Use empty string "" for unknown string values, {} for unknown objects.
 
-Available node types and their data shapes:
-- MANUAL_TRIGGER: data: {}
-- CONTENT_SOURCE: data: { url: string, variableName: string }
-- HTTP_REQUEST: data: { url: string, method: string, headers: Record<string,string>, variableName: string }
-- ANTHROPIC: data: { model: "claude-3-5-sonnet", userPrompt: string, systemPrompt: string, variableName: string }
-- GEMINI: data: { model: "gemini-2.5-flash", userPrompt: string, systemPrompt: string, variableName: string }
-- OPENAI: data: { model: "gpt-4-turbo", userPrompt: string, systemPrompt: string, variableName: string }
-- SLACK: data: { content: string, webhookUrl: "", variableName: string }
-- DISCORD: data: { content: string, webhookUrl: "", variableName: string }
-- GMAIL: data: { to: string, subject: string, body: string, variableName: string }
+VARIABLE REFERENCING — CRITICAL:
+When referencing output from a previous node, you MUST use the correct nested path, not just the variable name.
+Each node's output is stored as an object with specific fields. Always reference the exact field needed.
+
+Output shapes per node type:
+- MANUAL_TRIGGER: No output.
+- CONTENT_SOURCE (YouTube transcriber): variableName → output is { transcript: string }. Reference as {{variableName.transcript}}
+- HTTP_REQUEST: variableName → output is { httpResponse: { data: string, status: number, statusText: string } }. Reference as {{variableName.httpResponse.data}} (for the response body).
+- ANTHROPIC, GEMINI, OPENAI: variableName → output is { aiResponse: string, text: string }. Reference as {{variableName.aiResponse}} (preferred).
+- SLACK: variableName → output is { success: boolean, message?: string }. For the content sent, reference {{variableName.message}}.
+- DISCORD: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
+- GMAIL: variableName → output is { sent: boolean, messageId: string, threadId: string, to: string, subject: string }. Reference specific fields like {{variableName.messageId}} or {{variableName.sent}}.
+
+Examples of correct references:
+- After CONTENT_SOURCE with variableName "youtubeTranscript": next node's prompt: "Summarize: {{youtubeTranscript.transcript}}"
+- After HTTP_REQUEST with variableName "apiResponse": next node's prompt: "Data: {{apiResponse.httpResponse.data}}"
+- After ANTHROPIC with variableName "summary": next node's content: "{{summary.aiResponse}}"
+- After GMAIL with variableName "emailResult": next node's content: "Sent email ID: {{emailResult.messageId}}"
+
+WRONG examples (never do these):
+- {{youtubeTranscript}}          ← references entire object, not the transcript
+- {{apiResponse}}                ← references entire object, not the data
+- {{summary}}                    ← references entire object, not the AI text
+- {{emailResult}}                ← references entire object, not a specific field
+
+Available node types and their EXACT data shapes (all fields required, no extras):
+
+MANUAL_TRIGGER: 
+  data: {}
+
+CONTENT_SOURCE (YouTube transcriber): 
+  data: { 
+    url: string,        // YouTube video URL
+    variableName: string // e.g. "youtubeTranscript"
+  }
+
+HTTP_REQUEST: 
+  data: { 
+    endpoint: string,      // full URL e.g. "https://api.example.com/endpoint"
+    method: string,        // must be one of: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+    headers: object,       // e.g. { "Content-Type": "application/json" } or {} if none
+    body: string,          // JSON string for POST/PUT/PATCH, empty string "" for GET/DELETE
+    variableName: string   // e.g. "apiResponse"
+  }
+
+ANTHROPIC: 
+  data: { 
+    model: "claude-3-5-sonnet", 
+    userPrompt: string,   // the actual prompt referencing prior node outputs via {{variableName.nestedField}}
+    systemPrompt: string, // role/behavior instruction e.g. "You are a helpful assistant"
+    variableName: string  // e.g. "claudeResponse"
+  }
+
+GEMINI: 
+  data: { 
+    model: "gemini-2.5-flash", 
+    userPrompt: string, 
+    systemPrompt: string, 
+    variableName: string 
+  }
+
+OPENAI: 
+  data: { 
+    model: "gpt-4-turbo", 
+    userPrompt: string, 
+    systemPrompt: string, 
+    variableName: string 
+  }
+
+SLACK: 
+  data: { 
+    content: string,     // message text, can reference {{variableName.nestedField}} from prior nodes
+    webhookUrl: "",      // always empty string — user fills this in manually
+    variableName: string 
+  }
+
+DISCORD: 
+  data: { 
+    content: string, 
+    webhookUrl: "",      // always empty string — user fills this in manually
+    variableName: string 
+  }
+
+GMAIL: 
+  data: { 
+    to: string,          // recipient email e.g. "user@example.com" or "" if unknown
+    subject: string,     // email subject line
+    body: string,        // email body, can reference {{variableName.nestedField}} from prior nodes
+    variableName: string 
+  }
 
 Return shape:
 {
   "name": "kebab-name-YYYY-MM-DD-HH-MM",
   "nodes": [ { "id", "name", "type", "data", "position" } ],
   "connections": [ { "id", "fromNodeId", "fromOutput": "source-1", "toNodeId", "toInput": "target-1" } ]
+}
+
+EXAMPLE — "Get transcript from YouTube video https://youtu.be/abc123 and summarize it with Claude":
+{
+  "name": "youtube-summary-2024-01-15-10-30",
+  "nodes": [
+    { "id": "abc1234567", "name": "Manual Trigger", "type": "MANUAL_TRIGGER", "data": {}, "position": { "x": 100, "y": 100 } },
+    { "id": "def8901234", "name": "Get YouTube Transcript", "type": "CONTENT_SOURCE", "data": { "url": "https://youtu.be/abc123", "variableName": "youtubeTranscript" }, "position": { "x": 260, "y": 100 } },
+    { "id": "ghi5678901", "name": "Summarize with Claude", "type": "ANTHROPIC", "data": { "model": "claude-3-5-sonnet", "userPrompt": "Summarize this transcript: {{youtubeTranscript.transcript}}", "systemPrompt": "You are a helpful summarizer.", "variableName": "summary" }, "position": { "x": 420, "y": 100 } }
+  ],
+  "connections": [
+    { "id": "jkl2345678", "fromNodeId": "abc1234567", "fromOutput": "source-1", "toNodeId": "def8901234", "toInput": "target-1" },
+    { "id": "mno9012345", "fromNodeId": "def8901234", "fromOutput": "source-1", "toNodeId": "ghi5678901", "toInput": "target-1" }
+  ]
 }`;
 
 export const workflowsRouter = createTRPCRouter({
@@ -258,6 +386,8 @@ export const workflowsRouter = createTRPCRouter({
         prompt: input.prompt,
       });
 
+      console.log("LLM TEXT - ",text);
+
       let generated: {
         name: string;
         nodes: Array<{
@@ -282,8 +412,11 @@ export const workflowsRouter = createTRPCRouter({
         jsonText = jsonMatch[1];
       }
 
+      
+
       try {
         generated = JSON.parse(jsonText);
+        console.log("LLM response - ", generated )
       } catch {
         throw new Error(`Failed to parse generated workflow: ${text}`);
       }
@@ -316,6 +449,8 @@ export const workflowsRouter = createTRPCRouter({
           },
         },
       });
+
+      console.log("workflow creatd", workflow);
 
       return { id: workflow.id, name: workflow.name, rawText: text };
     }),
