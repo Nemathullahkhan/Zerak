@@ -172,7 +172,10 @@ export const workflowsRouter = createTRPCRouter({
         id: node.id,
         type: node.type,
         position: node.position as { x: number; y: number },
-        data: (node.data as Record<string, unknown>) || {},
+        data: {
+          ...((node.data as Record<string, unknown>) || {}),
+          workflowId: node.workflowId,
+        },
       }));
 
       const edges: Edge[] = workflow.connections.map((connection) => ({
@@ -295,8 +298,8 @@ export const workflowsRouter = createTRPCRouter({
                 id: node.id,
                 name: node.name,
                 type: node.type as NodeType,
-                data: node.data,
-                position: node.position,
+                data: node.data as any,
+                position: node.position as any,
               })),
             },
           },

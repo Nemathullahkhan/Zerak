@@ -8,11 +8,107 @@ import { httpRequestChannel } from "@/app/inngest/channels/http-request";
 import { manualTriggerChannel } from "@/app/inngest/channels/manual-trigger";
 import { switchChannel } from "@/app/inngest/channels/switch";
 import { inngest } from "@/app/inngest/client";
-import { topologicalSort } from "@/app/inngest/utils";
+import { sendWorkflowExecution, topologicalSort } from "@/app/inngest/utils";
 import { getExecutor } from "@/features/executions/lib/executor-registry";
 import { ExecutionStatus, NodeType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
+import { computeNextRun } from "@/lib/cron";
 import { NonRetriableError } from "inngest";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cron poller — fires every minute, dispatches due scheduled workflows
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STUCK_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
+export const scheduledWorkflowPoller = inngest.createFunction(
+  // ✅ Correct syntax from docs: single config object with triggers key
+  {
+    id: "scheduled-workflow-poller",
+    concurrency: { limit: 1 },
+  },
+  // arg 2: trigger
+  { cron: "* * * * *" },
+
+  
+  async ({ step, logger   }) => {
+
+    // Reset any schedules stuck in RUNNING (e.g. after a crash)
+    const unstuckCount = await step.run("unstick-stale-running", async () => {
+      const staleThreshold = new Date(Date.now() - STUCK_THRESHOLD_MS);
+      const result = await prisma.scheduledWorkflow.updateMany({
+        where: {
+          status: "RUNNING",
+          lastRun: { lte: staleThreshold },
+        },
+        data: { status: "IDLE" },
+      });
+      return result.count;
+    });
+
+    if (unstuckCount > 0) {
+      logger.warn(`Reset ${unstuckCount} stuck RUNNING schedule(s) to IDLE`);
+    }
+
+    const due = await step.run("find-due-schedules", async () => {
+      return prisma.scheduledWorkflow.findMany({
+        where: {
+          isActive: true,
+          status: "IDLE",
+          nextRun: { lte: new Date() },
+        },
+      });
+    });
+
+    logger.info(`Found ${due.length} due schedule(s)`);
+
+    if (due.length === 0) return { triggered: 0 };
+
+    // ✅ Fan-out pattern from docs: build all events then send in one batch
+    const events = await step.run("claim-and-prepare-events", async () => {
+      const claimed = [];
+
+      for (const schedule of due) {
+        const claim = await prisma.scheduledWorkflow.updateMany({
+          where: { id: schedule.id, status: "IDLE" },
+          data: {
+            status: "RUNNING",
+            lastRun: new Date(),
+            nextRun: computeNextRun(schedule.cronExpression, schedule.timezone),
+          },
+        });
+
+        if (claim.count === 0) continue; // already claimed
+
+        claimed.push({
+          name: "workflows/execute-workflow" as const,
+          data: {
+            workflowId: schedule.workflowId,
+            initialData: {
+              triggeredAt: new Date().toISOString(),
+              triggerType: "cron",
+            },
+          },
+        });
+      }
+
+      return claimed;
+    });
+
+    if (events.length === 0) return { triggered: 0 };
+
+    // ✅ Single batch send — same fan-out pattern shown in docs
+    await step.sendEvent("trigger-due-workflows", events);
+
+    logger.info(`Triggered ${events.length} workflow(s)`);
+
+    return { triggered: events.length };
+  },
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workflow executor — runs a workflow end-to-end
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const executeWorkflow = inngest.createFunction(
   {
@@ -29,9 +125,16 @@ export const executeWorkflow = inngest.createFunction(
           errorStack: event.data.error.stack,
         },
       });
+
+      // Reset schedule — must NOT be after a return statement
+      if (workflowId) {
+        await prisma.scheduledWorkflow.updateMany({
+          where: { workflowId, status: "RUNNING" },
+          data: { status: "ERROR" },
+        });
+      }
     },
   },
-
   {
     event: "workflows/execute-workflow",
     channels: [
@@ -56,43 +159,28 @@ export const executeWorkflow = inngest.createFunction(
 
     await step.run("create-execution", async () => {
       return prisma.execution.create({
-        data: {
-          workflowId,
-          inngestEventId,
-        },
+        data: { workflowId, inngestEventId },
       });
     });
 
     const sortedNodes = await step.run("prepare-workflow", async () => {
       const workflow = await prisma.workflow.findUniqueOrThrow({
-        where: {
-          id: workflowId,
-        },
-        include: {
-          nodes: true,
-          connections: true,
-        },
+        where: { id: workflowId },
+        include: { nodes: true, connections: true },
       });
       return topologicalSort(workflow.nodes, workflow.connections);
     });
 
     const userId = await step.run("find-user-id", async () => {
       const workflow = await prisma.workflow.findUniqueOrThrow({
-        where: {
-          id: workflowId,
-        },
-        select: {
-          userId: true,
-        },
+        where: { id: workflowId },
+        select: { userId: true },
       });
-
       return workflow.userId;
     });
 
-    // Initialize the context with any initial data from the trigger
     let context = event.data.initialData || {};
 
-    // Load connections once so we can resolve which nodes to skip after IF branches.
     const connections = await step.run("load-connections", async () => {
       const wf = await prisma.workflow.findUniqueOrThrow({
         where: { id: workflowId },
@@ -101,13 +189,9 @@ export const executeWorkflow = inngest.createFunction(
       return wf.connections;
     });
 
-    // Nodes whose execution should be skipped because they lie exclusively on
-    // a non-taken IF branch. We grow this set as we encounter IF nodes.
     const skippedNodeIds = new Set<string>();
 
-    // Execute each node in topological order
     for (const node of sortedNodes) {
-      // Skip nodes that were marked as unreachable by a prior IF branch
       if (skippedNodeIds.has(node.id)) continue;
 
       const executor = getExecutor(node.type as NodeType);
@@ -120,7 +204,6 @@ export const executeWorkflow = inngest.createFunction(
         publish,
       });
 
-      // After executing, check if this node set a branch decision
       const branchMeta = (context as Record<string, unknown>).__branch__ as
         | { type: string; taken: string; cases?: string[] }
         | undefined;
@@ -128,17 +211,14 @@ export const executeWorkflow = inngest.createFunction(
       if (branchMeta?.type === "if" || branchMeta?.type === "switch") {
         const takenHandle = branchMeta.taken;
 
-        // Build the list of handles that are NOT taken
         let skippedHandles: string[];
         if (branchMeta.type === "if") {
           skippedHandles = [takenHandle === "true" ? "false" : "true"];
         } else {
-          // SWITCH: skip every case handle except the taken one (including "default")
           const allHandles = [...(branchMeta.cases ?? []), "default"];
           skippedHandles = allHandles.filter((h) => h !== takenHandle);
         }
 
-        // Find all nodes directly connected via any non-taken handle
         const skippedDirectChildren = connections
           .filter(
             (c) =>
@@ -147,7 +227,6 @@ export const executeWorkflow = inngest.createFunction(
           )
           .map((c) => c.toNodeId);
 
-        // Transitively collect all descendants of the skipped children
         const queue = [...skippedDirectChildren];
         while (queue.length > 0) {
           const id = queue.shift()!;
@@ -159,13 +238,11 @@ export const executeWorkflow = inngest.createFunction(
           queue.push(...children);
         }
 
-        // Clear the branch flag from context so downstream nodes don't see it
         const { __branch__, ...rest } = context as Record<string, unknown>;
         void __branch__;
         context = rest;
       }
     }
-
 
     await step.run("update-execution", async () => {
       return prisma.execution.update({
@@ -178,9 +255,13 @@ export const executeWorkflow = inngest.createFunction(
       });
     });
 
-    return {
-      workflowId,
-      result: context,
-    };
+    await step.run("reset-schedule-status", async () => {
+      await prisma.scheduledWorkflow.updateMany({
+        where: { workflowId, status: "RUNNING" },
+        data: { status: "IDLE" },
+      });
+    });
+
+    return { workflowId, result: context };
   },
 );

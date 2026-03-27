@@ -108,6 +108,7 @@ model Workflow {
   nodes    Node[]
   connections Connection[]
   executions Execution[]
+  schedule   ScheduledWorkflow?
 
   userId String
   user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -201,5 +202,28 @@ model Execution {
   inngestEventId String @unique
 
   output Json?
+}
+
+enum ScheduleStatus {
+  IDLE
+  RUNNING
+  DISABLED
+  ERROR
+}
+
+model ScheduledWorkflow {
+  id             String         @id @default(cuid())
+  workflowId     String         @unique
+  workflow       Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  cronExpression String
+  timezone       String         @default("UTC")
+  isActive       Boolean        @default(true)
+  status         ScheduleStatus @default(IDLE)
+  lastRun        DateTime?
+  nextRun        DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@map("scheduled_workflow")
 }
 
