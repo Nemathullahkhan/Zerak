@@ -14,6 +14,8 @@ import { ExecutionStatus, NodeType } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
 import { computeNextRun } from "@/lib/cron";
 import { NonRetriableError } from "inngest";
+import { ifConditionChannel } from "@/app/inngest/channels/if-condition";
+import { filterChannel } from "@/app/inngest/channels/filter";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cron poller — fires every minute, dispatches due scheduled workflows
@@ -147,6 +149,9 @@ export const executeWorkflow = inngest.createFunction(
       anthropicChannel(),
       switchChannel(),
       codeChannel(),
+      ifConditionChannel(),
+      filterChannel()
+      
     ],
   },
   async ({ event, step, publish }) => {
@@ -191,10 +196,13 @@ export const executeWorkflow = inngest.createFunction(
 
     const skippedNodeIds = new Set<string>();
 
+    const nodeTimings: Record<string, { durationMs: number; nodeType: string; nodeName: string }> = {};
+
     for (const node of sortedNodes) {
       if (skippedNodeIds.has(node.id)) continue;
 
       const executor = getExecutor(node.type as NodeType);
+      const nodeStart = Date.now();
       context = await executor({
         data: node.data as Record<string, unknown>,
         nodeId: node.id,
@@ -203,6 +211,11 @@ export const executeWorkflow = inngest.createFunction(
         step,
         publish,
       });
+      nodeTimings[node.id] = {
+        durationMs: Date.now() - nodeStart,
+        nodeType: node.type,
+        nodeName: (node.data as Record<string, unknown>).variableName as string ?? node.type,
+      };
 
       const branchMeta = (context as Record<string, unknown>).__branch__ as
         | { type: string; taken: string; cases?: string[] }
@@ -250,7 +263,10 @@ export const executeWorkflow = inngest.createFunction(
         data: {
           status: ExecutionStatus.SUCCESS,
           completedAt: new Date(),
-          output: context,
+          output: {
+            ...(context as Record<string, unknown>),
+            __metadata__: { nodeTimings, totalNodes: sortedNodes.length },
+          },
         },
       });
     });

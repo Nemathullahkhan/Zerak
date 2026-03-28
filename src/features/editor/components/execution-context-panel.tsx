@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
 import { useAtomValue } from "jotai";
+import { WorkflowAnalysisPanel } from "@/features/executions/components/workflow-analysis-panel";
 
 interface ExecutionContextPanelProps {
   workflowId: string;
@@ -127,15 +128,18 @@ export const ExecutionContextPanel = ({
             </span>
           )}
           {data && (
-            <span
-              className={`ml-2 rounded border px-1.5 py-0.5 text-[10px] font-medium ${
-                data.status === "SUCCESS"
-                  ? "border-green-800/30 bg-green-900/20 text-green-400"
-                  : "border-red-800/30 bg-red-900/20 text-red-400"
-              }`}
-            >
-              {data.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${
+                  data.status === "SUCCESS"
+                    ? "border-green-800/30 bg-green-900/20 text-green-400"
+                    : "border-red-800/30 bg-red-900/20 text-red-400"
+                }`}
+              >
+                {data.status}
+              </span>
+              <WorkflowAnalysisPanel workflowId={workflowId} />
+            </div>
           )}
         </div>
       </div>

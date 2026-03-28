@@ -101,8 +101,7 @@ export const executionsRouter = createTRPCRouter({
         prisma.execution.findFirst({
           where: {
             workflowId: input.workflowId,
-            workflow: { userId: ctx.auth.user.id },
-            status: { in: ["SUCCESS", "FAILED"] },
+            workflow: { userId: ctx.auth.user.id }
           },
           orderBy: { startedAt: "desc" },
         }),

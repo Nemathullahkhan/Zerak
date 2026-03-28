@@ -32,7 +32,8 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { AddNodeButton } from "./add-node-button";
 import { ExecuteWorkflowButton } from "./execute-workflow-button";
 import { NodeExecutionLayout } from "./node-execution-layout";
-import { editorAtom } from "../store/atoms";
+import { editorAtom, executionSidebarOpenAtom } from "../store/atoms";
+import { ExecutionSidebar } from "@/features/executions/components/execution-sidebar";
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
 
   const setEditor = useSetAtom(editorAtom);
   const activeNode = useAtomValue(activeNodeAtom);
+  const sidebarOpen = useAtomValue(executionSidebarOpenAtom);
 
   const [nodes, setNodes] = useState<Node[]>(workflow.nodes);
   const [edges, setEdges] = useState<Edge[]>(workflow.edges);
@@ -111,13 +113,18 @@ export const Editor = ({ workflowId }: { workflowId: string }) => {
               <AddNodeButton />
             </Panel>
             {hasManualTrigger && (
-              <Panel position="bottom-center">
+              <Panel 
+                position="bottom-center"
+                style={{ paddingRight: sidebarOpen ? "380px" : undefined, transition: "padding-right 200ms ease" }}
+              >
                 <ExecuteWorkflowButton workflowId={workflowId} />
               </Panel>
             )}
           </ReactFlow>
         </div>
 
+        {/* Sidebar — fixed positioned, outside ReactFlow */}
+        <ExecutionSidebar workflowId={workflowId} />
       </EditorNodesContext.Provider>
     </div>
   );
