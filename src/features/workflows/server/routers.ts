@@ -454,4 +454,63 @@ export const workflowsRouter = createTRPCRouter({
 
       return { id: workflow.id, name: workflow.name, rawText: text };
     }),
+
+
+  createFromGenerated: protectedProcedure
+  .input(
+    z.object({
+      name: z.string(),
+      nodes: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          type: z.string(),
+          data: z.record(z.any()),
+          position: z.object({ x: z.number(), y: z.number() }),
+        }).passthrough() // allow extra fields
+      ),
+      connections: z.array(
+        z.object({
+          id: z.string(),
+          fromNodeId: z.string(),
+          toNodeId: z.string(),
+          fromOutput: z.string(),
+          toInput: z.string(),
+        }).passthrough() // allow extra fields
+      ),
+    })
+  )
+  .mutation(async ({ input, ctx }) => {
+    const workflow = await prisma.workflow.create({
+      data: {
+        name: input.name,
+        userId: ctx.auth.user.id,
+        nodes: {
+          createMany: {
+            data: input.nodes.map((node) => ({
+              id: node.id,
+              name: node.name,
+              type: node.type as NodeType,
+              data: node.data as any,
+              position: node.position,
+            })),
+          },
+        },
+        connections: {
+          createMany: {
+            data: input.connections.map((conn) => ({
+              id: conn.id,
+              fromNodeId: conn.fromNodeId,
+              toNodeId: conn.toNodeId,
+              fromOutput: conn.fromOutput,
+              toInput: conn.toInput,
+            })),
+          },
+        },
+      },
+    });
+    return { id: workflow.id, name: workflow.name };
+  }),
+  
+  
 });

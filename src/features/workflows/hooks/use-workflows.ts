@@ -17,7 +17,7 @@ export const useSuspenseWorkflows = () => {
 };
 
 /**
- * Hook to craete a new workflow
+ * Hook to create a new workflow
  */
 
 export const useCreateWorkflow = () => {
@@ -26,6 +26,28 @@ export const useCreateWorkflow = () => {
 
   return useMutation(
     trpc.workflows.create.mutationOptions({
+      onSuccess: (data) => {
+        toast.success(`Workflow ${data.name} created successfully`);
+        queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions({}));
+      },
+      onError: (error) => {
+        toast.error(`Failed to create workflow: ${error.message}`);
+      },
+    }),
+  );
+};
+
+/**
+ * Hook to create a new workflow using NLP
+ */
+
+
+export const useCreateWorkflowFromGenerated = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.workflows.createFromGenerated.mutationOptions({
       onSuccess: (data) => {
         toast.success(`Workflow ${data.name} created successfully`);
         queryClient.invalidateQueries(trpc.workflows.getMany.queryOptions({}));
