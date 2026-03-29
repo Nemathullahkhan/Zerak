@@ -15,8 +15,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import {
   useCreateWorkflow,
-  useCreateWorkflowFromGenerated,
-  useGenerateWorkflow,
   useRemoveWorkflow,
   useSuspenseWorkflows,
 } from "../hooks/use-workflows";
@@ -25,77 +23,11 @@ import { useRouter } from "next/navigation";
 import { useWorkflowsParams } from "../hooks/use-workflows-params";
 import { useEntitySearch } from "@/hooks/use-entity-search";
 import type { Workflow } from "@/generated/prisma/client";
-import { Loader2Icon, SendIcon, SparklesIcon, WorkflowIcon } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useCallback, useRef, useState } from "react";
-import { useStreamingStore } from "@/features/editor/store/streaming-store";
-import { useReactFlow } from "@xyflow/react";
-import { Input } from "@/components/ui/input";
+import { WorkflowIcon } from "lucide-react";
 import WorkflowNLP from "@/components/WorkflowNLP";
+import { motion } from "framer-motion";
 
-// export const WorkflowsNLP = () => {
-//   const [prompt, setPrompt] = useState("");
-//   const generateWorkflow = useGenerateWorkflow();
-//   const router = useRouter();
-
-//   const handleGenerate = () => {
-//     if (!prompt.trim()) return;
-//     generateWorkflow.mutate(
-//       { prompt },
-//       {
-//         onSuccess: (data) => {
-//           router.push(`/workflows/${data.id}`);
-//         },
-//       },
-//     );
-//   };
-
-//   return (
-//     <div className="relative border border-dashed rounded-lg p-6 bg-muted/50 flex flex-col gap-y-4">
-//       {generateWorkflow.isPending && (
-//         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-//           <Loader2Icon className="size-8 animate-spin text-primary mb-4" />
-//           <p className="text-lg font-medium">Generating your workflow...</p>
-//           <p className="text-sm text-muted-foreground">
-//             Claude is building the structure for you.
-//           </p>
-//         </div>
-//       )}
-//       <div className="flex items-center gap-x-2">
-//         <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center">
-//           <SparklesIcon className="size-4 text-primary" />
-//         </div>
-//         <div className="flex flex-col">
-//           <h3 className="text-sm font-semibold">AI Workflow Generator</h3>
-//           <p className="text-xs text-muted-foreground">
-//             Describe your workflow in plain English and let AI build it for you.
-//           </p>
-//         </div>
-//       </div>
-//       <Textarea
-//         placeholder="e.g. Fetch content from a YouTube URL, summarize it with Claude, and send the summary to Slack"
-//         value={prompt}
-//         onChange={(e) => setPrompt(e.target.value)}
-//         className="min-h-[100px] resize-none bg-background shadow-none"
-//         disabled={generateWorkflow.isPending}
-//       />
-//       <div className="flex justify-end">
-//         <Button
-//           onClick={handleGenerate}
-//           disabled={!prompt.trim() || generateWorkflow.isPending}
-//           size="sm"
-//           className="gap-x-2"
-//         >
-//           <SparklesIcon className="size-4" />
-//           Generate Workflow
-//         </Button>
-//       </div>
-//     </div>
-//   );
-// };
-
-
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
 export const WorkflowsSearch = () => {
   const [params, setParams] = useWorkflowsParams();
@@ -103,10 +35,9 @@ export const WorkflowsSearch = () => {
     params,
     setParams,
   });
-
   return (
     <EntitySearch
-      placeholder="Search workflows..."
+      placeholder="Search workflows…"
       value={searchValue}
       onChange={onSearchChange}
     />
@@ -115,22 +46,14 @@ export const WorkflowsSearch = () => {
 
 export const WorkflowsList = () => {
   const workflows = useSuspenseWorkflows();
-
-  if (workflows.data?.items.length === 0) {
-    return <WorkflowsEmpty />;
-  }
-
+  if (workflows.data?.items.length === 0) return <WorkflowsEmpty />;
   return (
-    <>
-      <EntityList
-        items={workflows.data.items}
-        getKey={(workflow) => workflow.id}
-        renderItem={(workflow) => (
-          <WorkflowItem key={workflow.id} data={workflow} />
-        )}
-        emptyView={<WorkflowsEmpty />}
-      />
-    </>
+    <EntityList
+      items={workflows.data.items}
+      getKey={(w) => w.id}
+      renderItem={(w) => <WorkflowItem key={w.id} data={w} />}
+      emptyView={<WorkflowsEmpty />}
+    />
   );
 };
 
@@ -141,12 +64,8 @@ export const WorkflowsHeader = ({ disabled }: { disabled?: boolean }) => {
 
   const handleCreate = () => {
     createWorkflow.mutate(undefined, {
-      onSuccess: (data) => {
-        router.push(`/workflows/${data.id}`);
-      },
-      onError: (error) => {
-        handleError(error);
-      },
+      onSuccess: (data) => router.push(`/workflows/${data.id}`),
+      onError: (error) => handleError(error),
     });
   };
 
@@ -178,32 +97,12 @@ export const WorkflowPagination = () => {
   );
 };
 
-export const WorkflowsContainer = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <>
-      <WorkflowNLP />
-      <EntityContainer
-        header={<WorkflowsHeader />}
-        search={<WorkflowsSearch />}
-        pagination={<WorkflowPagination />}
-      >
-        {children}
-      </EntityContainer>
-    </>
-  );
-};
-
-export const WorkflowsLoading = () => {
-  return <LoadingView message="workflows" />;
-};
-
-export const WorkflowsError = () => {
-  return <ErrorView message="Failed to load workflows" />;
-};
+export const WorkflowsLoading = () => (
+  <LoadingView message="Loading workflows…" />
+);
+export const WorkflowsError = () => (
+  <ErrorView message="Failed to load workflows" />
+);
 
 export const WorkflowsEmpty = () => {
   const router = useRouter();
@@ -212,19 +111,16 @@ export const WorkflowsEmpty = () => {
 
   const handleCreate = () => {
     createWorkflow.mutate(undefined, {
-      onError: (error) => {
-        handleError(error);
-      },
-      onSuccess: (data) => {
-        router.push(`/workflows/${data.id}`);
-      },
+      onError: (error) => handleError(error),
+      onSuccess: (data) => router.push(`/workflows/${data.id}`),
     });
   };
+
   return (
     <>
       {modal}
       <EmptyView
-        message="You haven't created any workflows yet. Get started by creating a new workflow."
+        message="You haven't created any workflows yet. Describe one above or start fresh."
         onNew={handleCreate}
       />
     </>
@@ -233,27 +129,77 @@ export const WorkflowsEmpty = () => {
 
 export const WorkflowItem = ({ data }: { data: Workflow }) => {
   const removeWorkflow = useRemoveWorkflow();
-  const handleRemove = () => {
-    removeWorkflow.mutate({ id: data.id });
-  };
   return (
     <EntityItem
       href={`/workflows/${data.id}`}
       title={data.name}
       subtitle={
         <>
-          Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}{" "}
-          &bull; Created{" "}
-          {formatDistanceToNow(data.createdAt, { addSuffix: true })}
+          Updated {formatDistanceToNow(data.updatedAt, { addSuffix: true })}
+          {" · "}
+          Created {formatDistanceToNow(data.createdAt, { addSuffix: true })}
         </>
       }
-      image={
-        <div className="size-8 flex items-center justify-center">
-          <WorkflowIcon className="size-5 text-muted-foreground" />
-        </div>
-      }
-      onRemove={handleRemove}
+      image={<WorkflowIcon className="size-4 text-white/30" />}
+      onRemove={() => removeWorkflow.mutate({ id: data.id })}
       isRemoving={removeWorkflow.isPending}
     />
+  );
+};
+
+// ─── Page container ───────────────────────────────────────────────────────────
+
+export const WorkflowsContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="min-h-full bg-zinc-950 pt-28">
+      <div className="px-4 md:px-10 py-8 mx-auto max-w-6xl  w-full flex flex-col gap-y-8">
+        {/* NLP Composer — full width, top of page */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex justify-center mb-10 text-center ">
+            <h1 className="mb-2 text-3xl font-semibold tracking-tight max-w-xl text-white">
+              Describe your workflow in natural language and we&apos;ll create
+              it for you.
+            </h1>
+          </div>
+          <WorkflowNLP />
+        </motion.div>
+
+        {/* Divider with label */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-zinc-800" />
+          <span className="text-[11px] text-white/20 uppercase tracking-widest font-medium">
+            Your workflows
+          </span>
+          <div className="flex-1 h-px bg-[#1e1e21]" />
+        </div>
+
+        {/* Workflows list section */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="flex flex-col gap-y-4"
+        >
+          {/* Header + search in one row */}
+          <div className="flex items-center justify-between gap-4">
+            <WorkflowsHeader />
+            <WorkflowsSearch />
+          </div>
+
+          {/* List */}
+          {children}
+
+          <WorkflowPagination />
+        </motion.div>
+      </div>
+    </div>
   );
 };
