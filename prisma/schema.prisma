@@ -132,6 +132,7 @@ enum NodeType {
   DISCORD
   SLACK
   GMAIL
+  GOOGLE_SHEETS
   IF
   SWITCH
   CODE

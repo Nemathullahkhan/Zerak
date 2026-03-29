@@ -5,6 +5,7 @@ import { ContentSourceNode } from "@/features/executions/components/content-sour
 import { DiscordNode } from "@/features/executions/components/discord/node";
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { GmailNode } from "@/features/executions/components/gmail/node";
+import { GoogleSheetsNode } from "@/features/executions/components/google-sheet/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import { IfConditionNode } from "@/features/executions/components/if-condition/node";
 import { OpenAiNode } from "@/features/executions/components/openai/node";
@@ -32,6 +33,7 @@ export const nodeComponents = {
   [NodeType.DISCORD]: DiscordNode,
   [NodeType.SLACK]: SlackNode,
   [NodeType.GMAIL]: GmailNode,
+  [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
 } as const satisfies NodeTypes;
 
 export type RegisteredNodeType = keyof typeof nodeComponents;

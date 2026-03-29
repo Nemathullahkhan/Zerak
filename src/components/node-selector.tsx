@@ -81,12 +81,10 @@ const executionNodes: NodeTypeOption[] = [
   {
     type: NodeType.CODE,
     label: "Code",
-    description:
-      "Write js code.",
+    description: "Write js code.",
     icon: GitBranch,
   },
-  
-  
+
   {
     type: NodeType.GEMINI,
     label: "Gemini",
@@ -122,6 +120,12 @@ const executionNodes: NodeTypeOption[] = [
     label: "Gmail",
     description: "Send a email.",
     icon: "/logos/gmail.svg",
+  },
+  {
+    type: NodeType.GOOGLE_SHEETS,
+    label: "Google Sheets",
+    description: "Interact with Google Sheets.",
+    icon: "/logos/google-sheets.svg",
   },
 ];
 
