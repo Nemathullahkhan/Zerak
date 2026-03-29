@@ -136,6 +136,8 @@ enum NodeType {
   IF
   SWITCH
   CODE
+  FILTER
+  LOOP
 }
 
 model Node {

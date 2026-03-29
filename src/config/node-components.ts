@@ -3,11 +3,13 @@ import { AnthropicNode } from "@/features/executions/components/anthropic/node";
 import { CodeNode } from "@/features/executions/components/code/node";
 import { ContentSourceNode } from "@/features/executions/components/content-source/node";
 import { DiscordNode } from "@/features/executions/components/discord/node";
+import { FilterNode } from "@/features/executions/components/filter/node";
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { GmailNode } from "@/features/executions/components/gmail/node";
 import { GoogleSheetsNode } from "@/features/executions/components/google-sheet/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import { IfConditionNode } from "@/features/executions/components/if-condition/node";
+import { LoopNode } from "@/features/executions/components/loop/node";
 import { OpenAiNode } from "@/features/executions/components/openai/node";
 import { SlackNode } from "@/features/executions/components/slack/node";
 import { SwitchNode } from "@/features/executions/components/switch/node";
@@ -34,6 +36,8 @@ export const nodeComponents = {
   [NodeType.SLACK]: SlackNode,
   [NodeType.GMAIL]: GmailNode,
   [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
+  [NodeType.FILTER]: FilterNode,
+  [NodeType.LOOP]: LoopNode,
 } as const satisfies NodeTypes;
 
 export type RegisteredNodeType = keyof typeof nodeComponents;

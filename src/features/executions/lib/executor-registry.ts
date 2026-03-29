@@ -14,6 +14,8 @@ import { ifConditionExecutor } from "../components/if-condition/executor";
 import { switchExecutor } from "../components/switch/executor";
 import { codeExecutor } from "../components/code/executor";
 import { googleSheetsExecutor } from "../components/google-sheet/executor";
+import { filterExecutor } from "../components/filter/executor";
+import { loopExecutor } from "../components/loop/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.INITIAL]: manualTriggerExecutor,
@@ -32,6 +34,8 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.CODE]: codeExecutor,
   [NodeType.SWITCH]: switchExecutor,
   [NodeType.GOOGLE_SHEETS]: googleSheetsExecutor,
+  [NodeType.FILTER]: filterExecutor, // TODO: add filter executor
+  [NodeType.LOOP]: loopExecutor, // TODO: add loop executor
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

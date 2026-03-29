@@ -79,6 +79,18 @@ const executionNodes: NodeTypeOption[] = [
     icon: GitBranch,
   },
   {
+    type: NodeType.LOOP,
+    label: "Loop",
+    description: "Repeat a set of nodes multiple times.",
+    icon: GitBranch,
+  },
+  {
+    type: NodeType.FILTER,
+    label: "Filter",
+    description: "Filter an array of items based on a condition.",
+    icon: GitBranch,
+  },
+  {
     type: NodeType.CODE,
     label: "Code",
     description: "Write js code.",

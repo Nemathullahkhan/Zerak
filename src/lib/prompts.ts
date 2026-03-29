@@ -23,7 +23,7 @@ FINAL WORKFLOW SCHEMA (required fields, no extra properties):
     {
       "id": string,        // nanoid (10 chars, alphanumeric)
       "name": string,      // human-readable node name
-      "type": string,      // one of: "MANUAL_TRIGGER", "CONTENT_SOURCE", "HTTP_REQUEST", "ANTHROPIC", "GEMINI", "OPENAI", "SLACK", "DISCORD", "GMAIL", "CODE", "IF", "SWITCH", "GOOGLE_FORM_TRIGGER", "STRIPE_TRIGGER"
+      "type": string,      // one of: "MANUAL_TRIGGER", "CONTENT_SOURCE", "HTTP_REQUEST", "ANTHROPIC", "GEMINI", "OPENAI", "SLACK", "DISCORD", "GMAIL", "GOOGLE_SHEETS", "CODE", "IF", "SWITCH", "FILTER", "LOOP", "GOOGLE_FORM_TRIGGER", "STRIPE_TRIGGER"
       "data": object,      // node‑specific fields; see original schema for exact requirements
       "position": { "x": number, "y": number }  // x increments by 160, y = 100
     }
@@ -48,7 +48,7 @@ Node data shapes (all fields required, use empty string "" for unknown):
 - SLACK: data: { content: string, webhookUrl: string, variableName: string }
 - DISCORD: data: { content: string, webhookUrl: string, variableName: string }
 - GMAIL: data: { to: string, subject: string, body: string, variableName: string }
-- - GOOGLE_SHEETS: data: { 
+- GOOGLE_SHEETS: data: { 
     variableName: string,
     action: "append" | "read" | "update" | "delete_rows" | "create_spreadsheet" | "create_sheet" | "batch_update",
     spreadsheetId?: string,         // required for most actions (except create_spreadsheet)
@@ -66,6 +66,14 @@ Node data shapes (all fields required, use empty string "" for unknown):
     return usersData.map(u => ({ name: u.name, email: u.email }));
 - IF: data: { condition: string }                      // condition expression
 - SWITCH: data: { switchValue: string, cases: Array<{ case: string, nextNodeId: string }> }  // simplified
+- FILTER: data: { sourceVariable: string, condition: string, variableName: string }
+  - Filters an array stored under 'sourceVariable' using a JavaScript condition that refers to each item as 'item'. Outputs a new array with items that satisfy the condition.
+  - Example: sourceVariable: "users", condition: "item.age > 18 && item.active === true", variableName: "adults"
+- LOOP: data: { sourceVariable: string, itemVariable: string, body: string, variableName: string, execution?: "sequential" | "parallel" }
+  - Iterates over the array in 'sourceVariable', executes the JavaScript 'body' for each item, and collects the return values into a new array.
+  - The current item is available under the name specified in 'itemVariable' (default "item"). Use 'return' to emit a value.
+  - Execution mode: "sequential" (default) processes items one after another; "parallel" runs all concurrently.
+  - Example: sourceVariable: "userIds", itemVariable: "id", body: "return fetch('/api/user/' + id).then(r => r.json());", variableName: "profiles"
 - GOOGLE_FORM_TRIGGER: data: { formId: string, webhookUrl: string }   // may need adjustment
 - STRIPE_TRIGGER: data: { eventType: string, webhookUrl: string }
 
