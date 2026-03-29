@@ -6,8 +6,10 @@ import { executionSidebarOpenAtom } from "../store/atoms";
 
 export const ExecuteWorkflowButton = ({
   workflowId,
+  onExecute,
 }: {
   workflowId: string;
+  onExecute?: () => void;
 }) => {
   const executeWorkflow = useExecuteWorkflow();
   const setExecutionSidebarOpen = useSetAtom(executionSidebarOpenAtom);
@@ -15,6 +17,7 @@ export const ExecuteWorkflowButton = ({
   const handleExecute = () => {
     executeWorkflow.mutate({ id: workflowId });
     setExecutionSidebarOpen(true);
+    onExecute?.();
   };
   return (
     <Button

@@ -111,6 +111,7 @@ export const NodeExecutionLayout = ({
       </header>
 
       {/* ── Three-column body ───────────────────────────────────────────── */}
+      {/* // TODO - Add Adjustable View for three sections */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left — execution context (33%) */}
         <aside className="flex w-1/3 shrink-0 flex-col overflow-hidden border-r border-border">
