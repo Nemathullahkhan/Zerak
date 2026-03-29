@@ -13,6 +13,7 @@ import { gmailExecutor } from "../components/gmail/executor";
 import { ifConditionExecutor } from "../components/if-condition/executor";
 import { switchExecutor } from "../components/switch/executor";
 import { codeExecutor } from "../components/code/executor";
+import { googleSheetsExecutor } from "../components/google-sheet/executor";
 
 export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.INITIAL]: manualTriggerExecutor,
@@ -30,6 +31,7 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.IF]: ifConditionExecutor,
   [NodeType.CODE]: codeExecutor,
   [NodeType.SWITCH]: switchExecutor,
+  [NodeType.GOOGLE_SHEETS]: googleSheetsExecutor,
 };
 
 export const getExecutor = (type: NodeType): NodeExecutor => {

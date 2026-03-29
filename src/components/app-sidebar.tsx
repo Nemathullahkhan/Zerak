@@ -58,7 +58,7 @@ export const AppSidebar = () => {
       <SidebarHeader>
         <SidebarMenuItem>
           <SidebarMenuButton asChild className="gap-x-4 h-10 px-4">
-            <Link href="/workflows" prefetch>
+            <Link href="/dashboard" prefetch>
               <Image
                 src="/logos/ZerakLogo2.svg"
                 alt="Zerak"

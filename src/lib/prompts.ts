@@ -48,6 +48,17 @@ Node data shapes (all fields required, use empty string "" for unknown):
 - SLACK: data: { content: string, webhookUrl: string, variableName: string }
 - DISCORD: data: { content: string, webhookUrl: string, variableName: string }
 - GMAIL: data: { to: string, subject: string, body: string, variableName: string }
+- - GOOGLE_SHEETS: data: { 
+    variableName: string,
+    action: "append" | "read" | "update" | "delete_rows" | "create_spreadsheet" | "create_sheet" | "batch_update",
+    spreadsheetId?: string,         // required for most actions (except create_spreadsheet)
+    sheetName?: string,              // required for sheet-level actions
+    range?: string,                  // e.g., "Sheet1!A2:C10" (for read/update/delete_rows)
+    data?: string,                   // JSON array/object for append/update
+    newSheetName?: string,           // for create_sheet
+    spreadsheetTitle?: string,       // for create_spreadsheet
+    batchOperations?: string          // JSON array of operations for batch_update
+  }
 - CODE: data: { code: string, variableName: string }
   - The CODE node's code is executed in a sandbox. It receives a single parameter called 'context' that contains all previous node outputs keyed by their variableName. The code must return a value, which will be stored under the CODE node's variableName.
   - Example: To access the output of a previous HTTP request node with variableName 'users' and extract the data array, write: 
