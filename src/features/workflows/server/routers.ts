@@ -34,6 +34,9 @@ import { generateText } from "ai";
 // - SLACK: data: { content: string, webhookUrl: "", variableName: string }
 // - DISCORD: data: { content: string, webhookUrl: "", variableName: string }
 // - GMAIL: data: { to: string, subject: string, body: string, variableName: string }
+// - GOOGLE_SHEETS: data: { spreadsheetId: string, sheetName: string, range: string, action: "read" | "append" | "update", variableName: string }
+// - LOOP: data: { sourceVariable: string, itemVariable: string, body: string, execution: "sequential" | "parallel", variableName: string }
+// - CODE: data: { code: string, variableName: string }
 
 // Return shape:
 // {
@@ -70,6 +73,9 @@ Output shapes per node type:
 - SLACK: variableName → output is { success: boolean, message?: string }. For the content sent, reference {{variableName.message}}.
 - DISCORD: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
 - GMAIL: variableName → output is { sent: boolean, messageId: string, threadId: string, to: string, subject: string }. Reference specific fields like {{variableName.messageId}} or {{variableName.sent}}.
+- GOOGLE_SHEETS: variableName → output is { rows: any[][] }. Reference first row first col as {{variableName.rows.0.0}}.
+- LOOP: variableName → output is an array of results from the loop body. During loop, use {{itemVariable.field}} to reference current item.
+- CODE: variableName → output is whatever the code returns. Reference as {{variableName}}.
 
 Examples of correct references:
 - After CONTENT_SOURCE with variableName "youtubeTranscript": next node's prompt: "Summarize: {{youtubeTranscript.transcript}}"
@@ -147,6 +153,30 @@ GMAIL:
     subject: string,     // email subject line
     body: string,        // email body, can reference {{variableName.nestedField}} from prior nodes
     variableName: string 
+  }
+
+GOOGLE_SHEETS:
+  data: {
+    spreadsheetId: string, // ID from the URL
+    sheetName: string,     // e.g. "Sheet1"
+    range: string,         // e.g. "A:D"
+    action: "read",        // default "read"
+    variableName: string   // e.g. "sheetData"
+  }
+
+LOOP:
+  data: {
+    sourceVariable: string, // the variable containing the array to loop over (e.g. "sheetData.rows")
+    itemVariable: string,   // name for current item e.g. "customer"
+    body: string,           // JS code to transform item. e.g. "return { email: customer[1], name: customer[0] };"
+    execution: "sequential", // "sequential" or "parallel"
+    variableName: string    // e.g. "loopResults"
+  }
+
+CODE:
+  data: {
+    code: string,           // JS code e.g. "const rows = context.sheetData.rows; return rows.slice(1);"
+    variableName: string
   }
 
 Return shape:
@@ -381,7 +411,7 @@ export const workflowsRouter = createTRPCRouter({
       });
 
       const { text } = await generateText({
-        model: anthropic("claude-sonnet-4-6"),
+        model: anthropic("claude-3-5-sonnet-latest"),
         system: SYSTEM_PROMPT,
         prompt: input.prompt,
       });
@@ -465,7 +495,7 @@ export const workflowsRouter = createTRPCRouter({
           id: z.string(),
           name: z.string(),
           type: z.string(),
-          data: z.record(z.any()),
+          data: z.record(z.string(), z.any()),
           position: z.object({ x: z.number(), y: z.number() }),
         }).passthrough() // allow extra fields
       ),

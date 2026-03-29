@@ -16,6 +16,8 @@ import { computeNextRun } from "@/lib/cron";
 import { NonRetriableError } from "inngest";
 import { ifConditionChannel } from "@/app/inngest/channels/if-condition";
 import { filterChannel } from "@/app/inngest/channels/filter";
+import { googleSheetsChannel } from "@/app/inngest/channels/google-sheets";
+import { loopChannel } from "@/app/inngest/channels/loop";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cron poller — fires every minute, dispatches due scheduled workflows
@@ -32,9 +34,7 @@ export const scheduledWorkflowPoller = inngest.createFunction(
   // arg 2: trigger
   { cron: "* * * * *" },
 
-  
-  async ({ step, logger   }) => {
-
+  async ({ step, logger }) => {
     // Reset any schedules stuck in RUNNING (e.g. after a crash)
     const unstuckCount = await step.run("unstick-stale-running", async () => {
       const staleThreshold = new Date(Date.now() - STUCK_THRESHOLD_MS);
@@ -117,7 +117,9 @@ export const executeWorkflow = inngest.createFunction(
     id: "execute-workflow",
     retries: process.env.NODE_ENV === "production" ? 3 : 0,
     onFailure: async ({ event, step }) => {
-      return prisma.execution.update({
+      const workflowId = event.data.event.data.workflowId;
+
+      await prisma.execution.update({
         where: {
           inngestEventId: event.data.event.id,
         },
@@ -128,7 +130,7 @@ export const executeWorkflow = inngest.createFunction(
         },
       });
 
-      // Reset schedule — must NOT be after a return statement
+      // Reset schedule
       if (workflowId) {
         await prisma.scheduledWorkflow.updateMany({
           where: { workflowId, status: "RUNNING" },
@@ -149,9 +151,10 @@ export const executeWorkflow = inngest.createFunction(
       anthropicChannel(),
       switchChannel(),
       codeChannel(),
+      loopChannel(),
+      googleSheetsChannel(),
       ifConditionChannel(),
-      filterChannel()
-      
+      filterChannel(),
     ],
   },
   async ({ event, step, publish }) => {
@@ -196,7 +199,10 @@ export const executeWorkflow = inngest.createFunction(
 
     const skippedNodeIds = new Set<string>();
 
-    const nodeTimings: Record<string, { durationMs: number; nodeType: string; nodeName: string }> = {};
+    const nodeTimings: Record<
+      string,
+      { durationMs: number; nodeType: string; nodeName: string }
+    > = {};
 
     for (const node of sortedNodes) {
       if (skippedNodeIds.has(node.id)) continue;
@@ -214,8 +220,90 @@ export const executeWorkflow = inngest.createFunction(
       nodeTimings[node.id] = {
         durationMs: Date.now() - nodeStart,
         nodeType: node.type,
-        nodeName: (node.data as Record<string, unknown>).variableName as string ?? node.type,
+        nodeName:
+          ((node.data as Record<string, unknown>).variableName as string) ??
+          node.type,
       };
+
+      const loopMeta = (context as Record<string, unknown>).__loop__ as
+        | { items: any[]; itemVariable: string }
+        | undefined;
+
+      if (loopMeta) {
+        const { items, itemVariable } = loopMeta;
+
+        // Find nodes in the loop body (reachable from LOOP node)
+        const bodyNodeIds = connections
+          .filter((c) => c.fromNodeId === node.id)
+          .map((c) => c.toNodeId);
+
+        const bodyNodes = new Set<string>();
+        const queue = [...bodyNodeIds];
+        while (queue.length > 0) {
+          const id = queue.shift()!;
+          if (bodyNodes.has(id)) continue;
+          bodyNodes.add(id);
+          const children = connections
+            .filter((c) => c.fromNodeId === id)
+            .map((c) => c.toNodeId);
+          queue.push(...children);
+        }
+
+        const loopBodyNodes = sortedNodes.filter((n) => bodyNodes.has(n.id));
+
+        // Handle empty array: skip all body nodes
+        if (items.length === 0) {
+          bodyNodes.forEach((id) => skippedNodeIds.add(id));
+          const { __loop__, ...rest } = context as Record<string, unknown>;
+          context = rest;
+          continue;
+        }
+
+        // Iterate over items
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          let iterationContext = { ...context, [itemVariable]: item };
+          delete (iterationContext as any).__loop__;
+
+          for (const bodyNode of loopBodyNodes) {
+            const bodyExecutor = getExecutor(bodyNode.type as NodeType);
+            const bodyNodeStart = Date.now();
+            
+            // Wrap step to ensure unique execution IDs per iteration
+            const iterationId = `loop-${node.id}-iter-${i}`;
+            const wrappedStep = {
+                ...step,
+                run: async (id: string, fn: any) => step.run(`${iterationId}-${id}`, fn),
+            } as any;
+
+            iterationContext = await bodyExecutor({
+              data: bodyNode.data as Record<string, unknown>,
+              nodeId: bodyNode.id,
+              userId,
+              context: iterationContext,
+              step: wrappedStep,
+              publish,
+            });
+
+            // Track timing for this iteration's body node
+            nodeTimings[`${bodyNode.id}-iter-${i}`] = {
+              durationMs: Date.now() - bodyNodeStart,
+              nodeType: bodyNode.type,
+              nodeName:
+                ((bodyNode.data as Record<string, unknown>).variableName as string) ??
+                bodyNode.type,
+            };
+          }
+        }
+
+        // Skip body nodes in the main flow
+        bodyNodes.forEach((id) => skippedNodeIds.add(id));
+
+        // Cleanup
+        const { __loop__, ...rest } = context as Record<string, unknown>;
+        context = rest;
+        continue; // Move to next node outside loop body
+      }
 
       const branchMeta = (context as Record<string, unknown>).__branch__ as
         | { type: string; taken: string; cases?: string[] }
@@ -235,8 +323,7 @@ export const executeWorkflow = inngest.createFunction(
         const skippedDirectChildren = connections
           .filter(
             (c) =>
-              c.fromNodeId === node.id &&
-              skippedHandles.includes(c.fromOutput),
+              c.fromNodeId === node.id && skippedHandles.includes(c.fromOutput),
           )
           .map((c) => c.toNodeId);
 
