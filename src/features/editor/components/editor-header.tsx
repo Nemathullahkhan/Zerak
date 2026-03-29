@@ -38,6 +38,7 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
   return (
     <div className="ml-auto">
       <ScheduleButton workflowId={workflowId} />
+      <Button>Export</Button>
       <Button size="sm" onClick={handleSave} disabled={saveWorkflow.isPending}>
         <SaveIcon className="size-4" />
         Save
@@ -121,7 +122,7 @@ export const EditorBreadcrumbs = ({ workflowId }: { workflowId: string }) => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <Link prefetch href="/workflows">
+            <Link prefetch href="/dashboard">
               Workflows
             </Link>
           </BreadcrumbLink>

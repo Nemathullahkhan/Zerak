@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { useSectionScroll } from "@/features/landing-page/hooks/use-section-scroll";
 import {
   Navbar,
@@ -19,6 +21,20 @@ import {
 
 export default function LandingPage() {
   const { setSectionRef, scrollToSection } = useSectionScroll();
+  const [pendingQuery, setPendingQuery] = useState<string | null>(null);
+  const [loginDialogOpen, setLoginDialogOpen] = useState(false);
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = !!session;
+  const router = useRouter();
+
+  const handleInputSubmit = (query: string) => {
+    if (isAuthenticated) {
+      router.push(`/dashboard?q=${encodeURIComponent(query)}`);
+    } else {
+      setPendingQuery(query);
+      setLoginDialogOpen(true);
+    }
+  };
 
   const navLinks = useMemo(
     () => [
@@ -35,7 +51,10 @@ export default function LandingPage() {
       <Navbar navLinks={navLinks} onNavClick={scrollToSection} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-32 pb-24 space-y-28">
-        <HeroSection onCompareClick={() => scrollToSection("comparison")} />
+        <HeroSection 
+          onCompareClick={() => scrollToSection("comparison")} 
+          onSubmit={handleInputSubmit}
+        />
 
         <ProblemSection sectionRef={setSectionRef("problem")} />
 
@@ -57,6 +76,20 @@ export default function LandingPage() {
       </main>
 
       <Footer navLinks={navLinks} onNavClick={scrollToSection} />
+
+      {loginDialogOpen && (
+        <div data-slot="login-dialog-placeholder" 
+             onClick={() => setLoginDialogOpen(false)}
+             style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)',
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      zIndex:50 }}>
+          <div style={{ background:'white', color:'black', padding:32, borderRadius:12 }}>
+            Login dialog coming in Phase 3
+            <br/><br/>
+            <button onClick={() => setLoginDialogOpen(false)} style={{background:'black', color:'white', padding:'8px 16px', borderRadius:'6px'}}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

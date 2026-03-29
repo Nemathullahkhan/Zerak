@@ -53,10 +53,11 @@ export function LoginForm() {
     await authClient.signIn.social(
       {
         provider: "github",
+        callbackURL: "/dashboard",
       },
       {
         onSuccess: () => {
-          router.push("/");
+          router.push("/dashboard");
         },
         onError: () => {
           toast.error("Something went wrong");
@@ -69,10 +70,11 @@ export function LoginForm() {
     await authClient.signIn.social(
       {
         provider: "google",
+        callbackURL: "/dashboard",
       },
       {
         onSuccess: () => {
-          router.push("/");
+          router.push("/dashboard");
         },
         onError: () => {
           toast.error("Something went wrong");
@@ -90,7 +92,7 @@ export function LoginForm() {
       },
       {
         onSuccess: () => {
-          router.push("/");
+          router.push("/dashboard");
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);
