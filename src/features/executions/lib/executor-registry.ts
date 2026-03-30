@@ -13,6 +13,7 @@ import { gmailExecutor } from "../components/gmail/executor";
 import { ifConditionExecutor } from "../components/if-condition/executor";
 import { switchExecutor } from "../components/switch/executor";
 import { codeExecutor } from "../components/code/executor";
+import { googleDriveExecutor } from "../components/google-drive/executor";
 import { googleSheetsExecutor } from "../components/google-sheet/executor";
 import { filterExecutor } from "../components/filter/executor";
 import { loopExecutor } from "../components/loop/executor";
@@ -30,6 +31,7 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.DISCORD]: discordExecutor,
   [NodeType.SLACK]: slackExecutor,
   [NodeType.GMAIL]: gmailExecutor,
+  [NodeType.GOOGLE_DRIVE]: googleDriveExecutor,
   [NodeType.IF]: ifConditionExecutor,
   [NodeType.CODE]: codeExecutor,
   [NodeType.SWITCH]: switchExecutor,

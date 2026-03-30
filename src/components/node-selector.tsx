@@ -139,6 +139,12 @@ const executionNodes: NodeTypeOption[] = [
     description: "Interact with Google Sheets.",
     icon: "/logos/google-sheets.svg",
   },
+  {
+    type: NodeType.GOOGLE_DRIVE,
+    label: "Google Drive",
+    description: "Interact with Google Drive files and folders.",
+    icon: "/logos/google-drive.svg",
+  },
 ];
 
 interface NodeSelectorProps {

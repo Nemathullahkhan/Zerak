@@ -6,6 +6,7 @@ import { DiscordNode } from "@/features/executions/components/discord/node";
 import { FilterNode } from "@/features/executions/components/filter/node";
 import { GeminiNode } from "@/features/executions/components/gemini/node";
 import { GmailNode } from "@/features/executions/components/gmail/node";
+import { GoogleDriveNode } from "@/features/executions/components/google-drive/node";
 import { GoogleSheetsNode } from "@/features/executions/components/google-sheet/node";
 import { HttpRequestNode } from "@/features/executions/components/http-request/node";
 import { IfConditionNode } from "@/features/executions/components/if-condition/node";
@@ -35,6 +36,7 @@ export const nodeComponents = {
   [NodeType.DISCORD]: DiscordNode,
   [NodeType.SLACK]: SlackNode,
   [NodeType.GMAIL]: GmailNode,
+  [NodeType.GOOGLE_DRIVE]: GoogleDriveNode,
   [NodeType.GOOGLE_SHEETS]: GoogleSheetsNode,
   [NodeType.FILTER]: FilterNode,
   [NodeType.LOOP]: LoopNode,
