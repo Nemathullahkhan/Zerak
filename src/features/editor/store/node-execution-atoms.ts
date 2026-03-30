@@ -29,6 +29,12 @@ export const nodeExecutionOutputAtom = atom<NodeExecutionOutput | null>(null);
 // All previous node outputs from last full workflow run
 export const executionContextAtom = atom<NodeExecutionOutput[]>([]);
 
+// The current workflow execution being inspected in the sidebar
+export const currentExecutionIdAtom = atom<string | null>(null);
+
+// true if a full workflow execution was just triggered
+export const isWorkflowExecutingAtom = atom<boolean>(false);
+
 // true while the executeNode tRPC mutation is in-flight (drives OutputPanel skeleton)
 export const isExecutingAtom = atom<boolean>(false);
 

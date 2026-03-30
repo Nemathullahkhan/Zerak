@@ -127,6 +127,7 @@ export const AnthropicExecutor: NodeExecutor<AnthropicData> = async ({
       [data.variableName]: {
         aiResponse: outputText,
         text: outputText, // same value, so {{variableName.text}} works as shown in the UI
+        __usage__: result.usage,
       },
     };
   } catch (error) {

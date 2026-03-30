@@ -1,6 +1,7 @@
 import { NodeExecutor } from "@/features/executions/types";
 import { NonRetriableError } from "inngest";
 import { loopChannel } from "@/app/inngest/channels/loop";
+import { resolveContextPath } from "@/lib/resolve-context-path";
 
 type LoopNodeData = {
   variableName?: string;
@@ -25,7 +26,10 @@ export const loopExecutor: NodeExecutor<LoopNodeData> = async ({
   }
 
   try {
-    const sourceArray = context[data.sourceVariable];
+    const sourceArray = resolveContextPath(
+      context as Record<string, unknown>,
+      data.sourceVariable,
+    );
     if (!Array.isArray(sourceArray)) {
       throw new NonRetriableError(
         `LOOP: source '${data.sourceVariable}' is not an array`,

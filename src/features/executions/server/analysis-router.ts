@@ -6,14 +6,14 @@ import z from "zod";
 import { ExecutionStatus, NodeType } from "@/generated/prisma/client";
 
 const COST_PER_1K_TOKENS: Record<string, { input: number; output: number }> = {
-  "gpt-4o":               { input: 0.0025,  output: 0.01 },
-  "gpt-4-turbo":          { input: 0.01,    output: 0.03 },
-  "gpt-4o-mini":          { input: 0.00015, output: 0.0006 },
-  "claude-3-5-sonnet":    { input: 0.003,   output: 0.015 },
-  "claude-3-haiku":       { input: 0.00025, output: 0.00125 },
-  "claude-sonnet-4-6":    { input: 0.003,   output: 0.015 },
-  "gemini-2.5-flash":     { input: 0.00015, output: 0.0006 },
-  "gemini-1.5-pro":       { input: 0.00125, output: 0.005 },
+  "gpt-4o": { input: 0.005, output: 0.015 },
+  "gpt-4-turbo": { input: 0.01, output: 0.03 },
+  "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
+  "claude-3-5-sonnet": { input: 0.003, output: 0.015 },
+  "claude-3-haiku": { input: 0.00025, output: 0.00125 },
+  "claude-sonnet-4-6": { input: 0.003, output: 0.015 },
+  "gemini-2.5-flash": { input: 0.00015, output: 0.0006 },
+  "gemini-1.5-pro": { input: 0.00125, output: 0.005 },
 };
 
 interface SuggestionItem {
@@ -57,14 +57,20 @@ export const analysisRouter = createTRPCRouter({
       const output = execution.output as any;
       const metadata = output?.__metadata__;
 
-      let nodeTimings: Record<string, { durationMs: number; nodeType: string; nodeName: string }> = {};
+      let nodeTimings: Record<
+        string,
+        { durationMs: number; nodeType: string; nodeName: string }
+      > = {};
 
       if (metadata?.nodeTimings) {
         nodeTimings = metadata.nodeTimings;
       } else {
         // Fallback for old executions
         workflow.nodes.forEach((node) => {
-          const isAI = node.type === NodeType.ANTHROPIC || node.type === NodeType.OPENAI || node.type === NodeType.GEMINI;
+          const isAI =
+            node.type === NodeType.ANTHROPIC ||
+            node.type === NodeType.OPENAI ||
+            node.type === NodeType.GEMINI;
           nodeTimings[node.id] = {
             durationMs: isAI ? 3000 : 500,
             nodeType: node.type,
@@ -74,65 +80,101 @@ export const analysisRouter = createTRPCRouter({
       }
 
       // Performance
-      const totalMs = Object.values(nodeTimings).reduce((sum, t) => sum + t.durationMs, 0);
+      const totalMs = Object.values(nodeTimings).reduce(
+        (sum, t) => sum + t.durationMs,
+        0,
+      );
       let bottleneckNodeId = "";
       let maxMs = -1;
 
-      const performanceNodes = Object.entries(nodeTimings).map(([nodeId, timing]) => {
-        if (timing.durationMs > maxMs) {
-          maxMs = timing.durationMs;
-          bottleneckNodeId = nodeId;
-        }
-        return {
-          nodeId,
-          nodeName: timing.nodeName,
-          nodeType: timing.nodeType,
-          durationMs: timing.durationMs,
-          percentOfTotal: totalMs > 0 ? (timing.durationMs / totalMs) * 100 : 0,
-        };
-      });
+      const performanceNodes = Object.entries(nodeTimings).map(
+        ([nodeId, timing]) => {
+          if (timing.durationMs > maxMs) {
+            maxMs = timing.durationMs;
+            bottleneckNodeId = nodeId;
+          }
+          return {
+            nodeId,
+            nodeName: timing.nodeName,
+            nodeType: timing.nodeType,
+            durationMs: timing.durationMs,
+            percentOfTotal:
+              totalMs > 0 ? (timing.durationMs / totalMs) * 100 : 0,
+          };
+        },
+      );
 
       // Cost
       let totalCost = 0;
       const aiNodesAnalysis = workflow.nodes
-        .filter((n) => n.type === NodeType.ANTHROPIC || n.type === NodeType.OPENAI || n.type === NodeType.GEMINI)
+        .filter(
+          (n) =>
+            n.type === NodeType.ANTHROPIC ||
+            n.type === NodeType.OPENAI ||
+            n.type === NodeType.GEMINI,
+        )
         .map((node) => {
           const data = node.data as any;
           const model = data.model || "";
-          const systemPrompt = data.systemPrompt || "";
-          const userPrompt = data.userPrompt || "";
-          
-          const inputTokens = Math.ceil((systemPrompt.length + userPrompt.length) / 4);
-          const outputTokens = 500;
-          
+          const variableName = data.variableName || "";
+
+          // Check for real usage in context output
+          const nodeOutput = output[variableName];
+          const realUsage = nodeOutput?.__usage__;
+
+          let inputTokens: number;
+          let outputTokens: number;
+          let isEstimate = false;
+
+          if (realUsage) {
+            inputTokens = realUsage.promptTokens || realUsage.inputTokens || 0;
+            outputTokens =
+              realUsage.completionTokens || realUsage.outputTokens || 0;
+          } else {
+            // Fallback estimate
+            isEstimate = true;
+            const systemPrompt = data.systemPrompt || "";
+            const userPrompt = data.userPrompt || "";
+            inputTokens = Math.ceil(
+              (systemPrompt.length + userPrompt.length) / 4,
+            );
+            outputTokens = 500;
+          }
+
           const rate = COST_PER_1K_TOKENS[model] || { input: 0, output: 0 };
-          const cost = (inputTokens / 1000) * rate.input + (outputTokens / 1000) * rate.output;
-          
+          const cost =
+            (inputTokens / 1000) * rate.input +
+            (outputTokens / 1000) * rate.output;
+
           totalCost += cost;
 
           return {
             nodeId: node.id,
-            nodeName: data.variableName || node.type,
+            nodeName: variableName || node.type,
             model,
             inputTokensEst: inputTokens,
             outputTokensEst: outputTokens,
             costPerRun: cost,
+            isEstimate,
           };
         });
 
       // Enhancement
-      const aiNodeSummaries = workflow.nodes
-        .filter((n) => n.type === NodeType.ANTHROPIC || n.type === NodeType.OPENAI || n.type === NodeType.GEMINI)
-        .map((n) => {
-          const data = n.data as any;
-          return {
-            nodeType: n.type,
-            model: data.model,
-            systemPrompt: data.systemPrompt,
-            userPrompt: data.userPrompt,
-            variableName: data.variableName,
-          };
-        });
+      const aiNodeSummaries = aiNodesAnalysis.map((n) => {
+        const node = workflow.nodes.find((node) => node.id === n.nodeId);
+        const data = node?.data as any;
+        return {
+          nodeType: node?.type,
+          model: n.model,
+          systemPrompt: data.systemPrompt,
+          userPrompt: data.userPrompt,
+          variableName: n.nodeName,
+          actualUsage: {
+            inputTokens: n.inputTokensEst,
+            outputTokens: n.outputTokensEst,
+          },
+        };
+      });
 
       let enhancementSuggestions: SuggestionItem[] = [];
 
@@ -156,19 +198,30 @@ Each suggestion must have:
 - actionField: string (exactly which field in the node data should be updated, e.g. "model", "userPrompt", "systemPrompt")
 - actionValue: string (the exact new value that this field should be updated to)
 
-Focus on: (1) model downgrades where the task doesn't need a powerful model, (2) prompt verbosity — suggest adding "respond only with JSON, no preamble" style constraints where appropriate.
+Focus on: (1) model downgrades where the task doesn't need a powerful model, (2) prompt verbosity — suggest adding "respond only with JSON, no preamble" style constraints where appropriate. Use the actual token usage provided to ground your recommendations.
 
 Return a JSON array [] — nothing else.`,
             prompt: JSON.stringify(aiNodeSummaries, null, 2),
           });
 
           let jsonText = text.trim();
-          const jsonMatch = jsonText.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-          if (jsonMatch) {
-            jsonText = jsonMatch[1];
+          // Remove potential markdown code blocks
+          if (jsonText.startsWith("```")) {
+            jsonText = jsonText
+              .replace(/^```(json)?\n?/, "")
+              .replace(/\n?```$/, "");
           }
 
-          enhancementSuggestions = JSON.parse(jsonText);
+          try {
+            enhancementSuggestions = JSON.parse(jsonText);
+          } catch (parseError) {
+            console.error(
+              "Failed to parse AI suggestions:",
+              parseError,
+              jsonText,
+            );
+            enhancementSuggestions = [];
+          }
         } catch (error) {
           console.error("Enhancement analysis failed:", error);
           enhancementSuggestions = [];

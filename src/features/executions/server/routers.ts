@@ -5,6 +5,8 @@ import { executorRegistry } from "@/features/executions/lib/executor-registry";
 import { NodeType } from "@/generated/prisma/enums";
 import z from "zod";
 import { PAGINATION } from "@/config/constants";
+import { topologicalSort } from "@/app/inngest/utils";
+import { Connection, Node } from "@/generated/prisma/client";
 
 // ─── Step shim ────────────────────────────────────────────────────────────────
 
@@ -30,48 +32,46 @@ const publishShim = async (..._args: unknown[]) => {};
 
 function buildGroups(
   output: Record<string, unknown>,
-  nodes: Array<{ name: string; type: string; data: Record<string, unknown> }>,
+  nodes: Array<{
+    id: string;
+    name: string;
+    type: string;
+    data: Record<string, unknown>;
+  }>,
 ) {
-  const nodeByVariableName = new Map<string, { name: string; type: string }>();
-  for (const node of nodes) {
+  return nodes.map((node) => {
     const variableName = node.data?.variableName as string | undefined;
+    const variables: Array<{ variableName: string; output: unknown }> = [];
+
     if (variableName) {
-      nodeByVariableName.set(variableName, {
-        name: node.name,
-        type: node.type,
-      });
-    }
-  }
+      const value = output[variableName];
+      if (value !== undefined) {
+        variables.push({ variableName, output: value });
 
-  return Object.entries(output)
-    .filter(([key]) => key !== "__metadata__")
-    .map(([variableName, value]) => {
-      const nodeInfo = nodeByVariableName.get(variableName);
-      const variables: Array<{ variableName: string; output: unknown }> = [];
-
-      variables.push({ variableName, output: value });
-
-      if (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value)
-      ) {
-        for (const [key, val] of Object.entries(
-          value as Record<string, unknown>,
-        )) {
-          variables.push({
-            variableName: `${variableName}.${key}`,
-            output: val,
-          });
+        if (
+          value !== null &&
+          typeof value === "object" &&
+          !Array.isArray(value)
+        ) {
+          for (const [key, val] of Object.entries(
+            value as Record<string, unknown>,
+          )) {
+            variables.push({
+              variableName: `${variableName}.${key}`,
+              output: val,
+            });
+          }
         }
       }
+    }
 
-      return {
-        nodeName: nodeInfo?.name ?? formatVariableName(variableName),
-        nodeType: nodeInfo?.type ?? "UNKNOWN",
-        variables,
-      };
-    });
+    return {
+      nodeId: node.id,
+      nodeName: node.name || formatVariableName(variableName ?? node.type),
+      nodeType: node.type,
+      variables,
+    };
+  });
 }
 
 function atomOutputsToContext(
@@ -101,7 +101,7 @@ export const executionsRouter = createTRPCRouter({
         prisma.execution.findFirst({
           where: {
             workflowId: input.workflowId,
-            workflow: { userId: ctx.auth.user.id }
+            workflow: { userId: ctx.auth.user.id },
           },
           orderBy: { startedAt: "desc" },
         }),
@@ -110,23 +110,33 @@ export const executionsRouter = createTRPCRouter({
             id: input.workflowId,
             userId: ctx.auth.user.id,
           },
-          include: { nodes: true },
+          include: { nodes: true, connections: true },
         }),
       ]);
 
       if (!execution) return null;
 
       const output = (execution.output ?? {}) as Record<string, unknown>;
-      const nodes = workflow.nodes.map((n) => ({
+
+      // Sort nodes to reflect execution flow
+      const sortedNodes = topologicalSort(
+        workflow.nodes as Node[],
+        workflow.connections as Connection[],
+      );
+
+      const nodes = sortedNodes.map((n) => ({
+        id: n.id,
         name: n.name,
         type: n.type as string,
         data: (n.data ?? {}) as Record<string, unknown>,
       }));
 
       return {
+        id: execution.id,
         status: execution.status,
         startedAt: execution.startedAt.toISOString(),
         groups: buildGroups(output, nodes),
+        output,
       };
     }),
 

@@ -204,26 +204,112 @@ export const executeWorkflow = inngest.createFunction(
       { durationMs: number; nodeType: string; nodeName: string }
     > = {};
 
+    const nodeResults: Record<
+      string,
+      { status: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED"; error?: string }
+    > = {};
+
+    // Initialize all nodes as PENDING
+    for (const node of sortedNodes) {
+      nodeResults[node.id] = { status: "PENDING" };
+    }
+
+    // Initial update to set PENDING statuses
+    await step.run("initialize-node-results", async () => {
+      return prisma.execution.update({
+        where: { inngestEventId },
+        data: {
+          output: {
+            ...(context as Record<string, unknown>),
+            __metadata__: {
+              nodeTimings,
+              nodeResults,
+              totalNodes: sortedNodes.length,
+            },
+          },
+        },
+      });
+    });
+
     for (const node of sortedNodes) {
       if (skippedNodeIds.has(node.id)) continue;
 
       const executor = getExecutor(node.type as NodeType);
       const nodeStart = Date.now();
-      context = await executor({
-        data: node.data as Record<string, unknown>,
-        nodeId: node.id,
-        userId,
-        context,
-        step,
-        publish,
+
+      // Mark as RUNNING
+      nodeResults[node.id] = { status: "RUNNING" };
+      await step.run(`mark-running-${node.id}`, async () => {
+        return prisma.execution.update({
+          where: { inngestEventId },
+          data: {
+            output: {
+              ...(context as Record<string, unknown>),
+              __metadata__: {
+                nodeTimings,
+                nodeResults,
+                totalNodes: sortedNodes.length,
+              },
+            },
+          },
+        });
       });
-      nodeTimings[node.id] = {
-        durationMs: Date.now() - nodeStart,
-        nodeType: node.type,
-        nodeName:
-          ((node.data as Record<string, unknown>).variableName as string) ??
-          node.type,
-      };
+
+      try {
+        context = await executor({
+          data: node.data as Record<string, unknown>,
+          nodeId: node.id,
+          userId,
+          context,
+          step,
+          publish,
+        });
+
+        nodeTimings[node.id] = {
+          durationMs: Date.now() - nodeStart,
+          nodeType: node.type,
+          nodeName:
+            ((node.data as Record<string, unknown>).variableName as string) ??
+            node.type,
+        };
+
+        // Mark as SUCCESS
+        nodeResults[node.id] = { status: "SUCCESS" };
+        await step.run(`mark-success-${node.id}`, async () => {
+          return prisma.execution.update({
+            where: { inngestEventId },
+            data: {
+              output: {
+                ...(context as Record<string, unknown>),
+                __metadata__: {
+                  nodeTimings,
+                  nodeResults,
+                  totalNodes: sortedNodes.length,
+                },
+              },
+            },
+          });
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        nodeResults[node.id] = { status: "FAILED", error: msg };
+        await step.run(`mark-failed-${node.id}`, async () => {
+          return prisma.execution.update({
+            where: { inngestEventId },
+            data: {
+              output: {
+                ...(context as Record<string, unknown>),
+                __metadata__: {
+                  nodeTimings,
+                  nodeResults,
+                  totalNodes: sortedNodes.length,
+                },
+              },
+            },
+          });
+        });
+        throw err;
+      }
 
       const loopMeta = (context as Record<string, unknown>).__loop__ as
         | { items: any[]; itemVariable: string }
@@ -268,12 +354,13 @@ export const executeWorkflow = inngest.createFunction(
           for (const bodyNode of loopBodyNodes) {
             const bodyExecutor = getExecutor(bodyNode.type as NodeType);
             const bodyNodeStart = Date.now();
-            
+
             // Wrap step to ensure unique execution IDs per iteration
             const iterationId = `loop-${node.id}-iter-${i}`;
             const wrappedStep = {
-                ...step,
-                run: async (id: string, fn: any) => step.run(`${iterationId}-${id}`, fn),
+              ...step,
+              run: async (id: string, fn: any) =>
+                step.run(`${iterationId}-${id}`, fn),
             } as any;
 
             iterationContext = await bodyExecutor({
@@ -290,8 +377,8 @@ export const executeWorkflow = inngest.createFunction(
               durationMs: Date.now() - bodyNodeStart,
               nodeType: bodyNode.type,
               nodeName:
-                ((bodyNode.data as Record<string, unknown>).variableName as string) ??
-                bodyNode.type,
+                ((bodyNode.data as Record<string, unknown>)
+                  .variableName as string) ?? bodyNode.type,
             };
           }
         }
@@ -352,7 +439,11 @@ export const executeWorkflow = inngest.createFunction(
           completedAt: new Date(),
           output: {
             ...(context as Record<string, unknown>),
-            __metadata__: { nodeTimings, totalNodes: sortedNodes.length },
+            __metadata__: {
+              nodeTimings,
+              nodeResults,
+              totalNodes: sortedNodes.length,
+            },
           },
         },
       });
