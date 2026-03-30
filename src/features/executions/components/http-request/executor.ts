@@ -11,6 +11,9 @@ Handlebars.registerHelper("json", (context) => {
   return safeString;
 });
 
+/** Long-running sync APIs (e.g. Apify run-sync-get-dataset-items) need a high ceiling. */
+const HTTP_REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
+
 type HttpRequestData = {
   variableName?: string;
   endpoint?: string;
@@ -74,7 +77,10 @@ export const httpRequestExecutor: NodeExecutor<HttpRequestData> = async ({
       console.log("ENDPOINT", { endpoint });
       const method = data.method;
 
-      const options: KyOptions = { method };
+      const options: KyOptions = {
+        method,
+        timeout: HTTP_REQUEST_TIMEOUT_MS,
+      };
 
       if (["POST", "PUT", "PATCH"].includes(method)) {
         const resolved = Handlebars.compile(data.body)(context);

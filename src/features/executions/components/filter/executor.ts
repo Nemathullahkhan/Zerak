@@ -1,6 +1,7 @@
 import { NodeExecutor } from "@/features/executions/types";
 import { NonRetriableError } from "inngest";
 import { filterChannel } from "@/app/inngest/channels/filter";
+import { resolveContextPath } from "@/lib/resolve-context-path";
 
 type FilterNodeData = {
   variableName?: string;
@@ -37,7 +38,10 @@ export const filterExecutor: NodeExecutor<FilterNodeData> = async ({
 
   try {
     const result = await step.run("filter-execution", async () => {
-      const sourceArray = context[data.sourceVariable!];
+      const sourceArray = resolveContextPath(
+        context as Record<string, unknown>,
+        data.sourceVariable!,
+      );
       if (!Array.isArray(sourceArray)) {
         throw new NonRetriableError(
           `FILTER: source '${data.sourceVariable}' is not an array`,

@@ -8,6 +8,11 @@ import { Edge, Node } from "@xyflow/react";
 import { sendWorkflowExecution } from "@/app/inngest/utils";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
+import {
+  remapGeneratedWorkflowIds,
+  type IncomingGeneratedConnection,
+  type IncomingGeneratedNode,
+} from "@/lib/remap-generated-workflow-ids";
 
 
 
@@ -451,30 +456,23 @@ export const workflowsRouter = createTRPCRouter({
         throw new Error(`Failed to parse generated workflow: ${text}`);
       }
 
+      const { remappedNodes, remappedConnections } = remapGeneratedWorkflowIds(
+        generated.nodes as IncomingGeneratedNode[],
+        generated.connections as IncomingGeneratedConnection[],
+      );
+
       const workflow = await prisma.workflow.create({
         data: {
           name: generated.name,
           userId: ctx.auth.user.id,
           nodes: {
             createMany: {
-              data: generated.nodes.map((node) => ({
-                id: node.id,
-                name: node.name,
-                type: node.type as NodeType,
-                data: node.data as any,
-                position: node.position as any,
-              })),
+              data: remappedNodes,
             },
           },
           connections: {
             createMany: {
-              data: generated.connections.map((conn) => ({
-                id: conn.id,
-                fromNodeId: conn.fromNodeId,
-                toNodeId: conn.toNodeId,
-                fromOutput: conn.fromOutput,
-                toInput: conn.toInput,
-              })),
+              data: remappedConnections,
             },
           },
         },
@@ -511,30 +509,23 @@ export const workflowsRouter = createTRPCRouter({
     })
   )
   .mutation(async ({ input, ctx }) => {
+    const { remappedNodes, remappedConnections } = remapGeneratedWorkflowIds(
+      input.nodes as IncomingGeneratedNode[],
+      input.connections as IncomingGeneratedConnection[],
+    );
+
     const workflow = await prisma.workflow.create({
       data: {
         name: input.name,
         userId: ctx.auth.user.id,
         nodes: {
           createMany: {
-            data: input.nodes.map((node) => ({
-              id: node.id,
-              name: node.name,
-              type: node.type as NodeType,
-              data: node.data as any,
-              position: node.position,
-            })),
+            data: remappedNodes,
           },
         },
         connections: {
           createMany: {
-            data: input.connections.map((conn) => ({
-              id: conn.id,
-              fromNodeId: conn.fromNodeId,
-              toNodeId: conn.toNodeId,
-              fromOutput: conn.fromOutput,
-              toInput: conn.toInput,
-            })),
+            data: remappedConnections,
           },
         },
       },

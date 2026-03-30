@@ -79,7 +79,7 @@ Node data shapes — include every key listed for that node type. Use "" for unk
 - FILTER: data: { sourceVariable: string, condition: string, variableName: string }
   - Filters array at sourceVariable; each element is referenced as item in condition. Output is a new array under variableName.
 - LOOP: data: { sourceVariable: string, itemVariable: string, body: string, variableName: string, execution: "sequential" | "parallel" }
-  - sourceVariable: name of a prior output that MUST be an array (e.g. jobs from CODE). If the value is nested, use CODE first to expose a top-level array under one variableName.
+  - sourceVariable: identifies the array to iterate. Use the prior node's variableName if it is already an array, OR a dot path to a nested array (e.g. rankedJobs.jobs). Do NOT use Handlebars or {{...}} here — not the same as ANTHROPIC prompts.
   - itemVariable: logical name for one element (e.g. "job") — used in documentation and downstream {{...}} hints; use a single word in camelCase.
   - variableName: where this node's output is stored (same array is passed through for orchestration).
   - execution: always set explicitly — use "sequential" unless the user requires parallel.
