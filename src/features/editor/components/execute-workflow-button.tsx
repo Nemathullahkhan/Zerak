@@ -3,6 +3,7 @@ import { useExecuteWorkflow } from "@/features/workflows/hooks/use-workflows";
 import { FlaskConicalIcon } from "lucide-react";
 import { useSetAtom } from "jotai";
 import { executionSidebarOpenAtom } from "../store/atoms";
+import { isWorkflowExecutingAtom } from "../store/node-execution-atoms";
 
 export const ExecuteWorkflowButton = ({
   workflowId,
@@ -13,8 +14,10 @@ export const ExecuteWorkflowButton = ({
 }) => {
   const executeWorkflow = useExecuteWorkflow();
   const setExecutionSidebarOpen = useSetAtom(executionSidebarOpenAtom);
+  const setIsExecuting = useSetAtom(isWorkflowExecutingAtom);
 
   const handleExecute = () => {
+    setIsExecuting(true);
     executeWorkflow.mutate({ id: workflowId });
     setExecutionSidebarOpen(true);
     onExecute?.();

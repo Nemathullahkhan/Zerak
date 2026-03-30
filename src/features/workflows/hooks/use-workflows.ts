@@ -141,14 +141,20 @@ export const useUpdateWorkflow = () => {
 
 export const useExecuteWorkflow = () => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
 
   return useMutation(
     trpc.workflows.execute.mutationOptions({
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         toast.success(`Workflow ${data.name} executed`);
+        queryClient.invalidateQueries(
+          trpc.executions.getLastForWorkflow.queryFilter({
+            workflowId: variables.id,
+          }),
+        );
       },
       onError: (error) => {
-        toast.error(`Failed to saved workflow: ${error.message}`);
+        toast.error(`Failed to execute workflow: ${error.message}`);
       },
     }),
   );
