@@ -138,6 +138,7 @@ enum NodeType {
   CODE
   FILTER
   LOOP
+  GOOGLE_DRIVE
 }
 
 model Node {

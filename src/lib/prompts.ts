@@ -23,8 +23,8 @@ FINAL WORKFLOW SCHEMA (required fields, no extra properties):
     {
       "id": string,        // nanoid (10 chars, alphanumeric)
       "name": string,      // human-readable node name
-      "type": string,      // one of: "MANUAL_TRIGGER", "CONTENT_SOURCE", "HTTP_REQUEST", "ANTHROPIC", "GEMINI", "OPENAI", "SLACK", "DISCORD", "GMAIL", "GOOGLE_SHEETS", "CODE", "IF", "SWITCH", "FILTER", "LOOP", "GOOGLE_FORM_TRIGGER", "STRIPE_TRIGGER"
-      "data": object,      // node‑specific fields; see original schema for exact requirements
+      "type": string,      // MUST be exactly one of the allowed node types (see list below — matches DB enum)
+      "data": object,      // node-specific fields; see shapes below
       "position": { "x": number, "y": number }  // x increments by 160, y = 100
     }
   ],
@@ -39,51 +39,61 @@ FINAL WORKFLOW SCHEMA (required fields, no extra properties):
   ]
 }
 
-Node data shapes (all fields required, use empty string "" for unknown):
+ALLOWED NODE TYPES (exact strings — use these only; "Claude" means use ANTHROPIC):
+INITIAL, MANUAL_TRIGGER, HTTP_REQUEST, GOOGLE_FORM_TRIGGER, STRIPE_TRIGGER, ANTHROPIC, GEMINI, OPENAI, CONTENT_SOURCE, DISCORD, SLACK, GMAIL, GOOGLE_SHEETS, IF, SWITCH, CODE, FILTER, LOOP, GOOGLE_DRIVE
+
+For generated workflows, always start with MANUAL_TRIGGER (not INITIAL).
+
+Node data shapes — include every key listed for that node type. Use "" for unknown strings, {} for empty objects. Optional keys (marked ?) may be omitted or set to "".
 
 - MANUAL_TRIGGER: data: {}
 - CONTENT_SOURCE: data: { url: string, variableName: string }
 - HTTP_REQUEST: data: { endpoint: string, method: "GET"|"POST"|"PUT"|"PATCH"|"DELETE", headers: object, body: string, variableName: string }
 - ANTHROPIC, GEMINI, OPENAI: data: { model: string, userPrompt: string, systemPrompt: string, variableName: string }
+  - Claude / Anthropic: use type ANTHROPIC and model such as "claude-3-5-sonnet-latest" or "claude-3-5-sonnet".
 - SLACK: data: { content: string, webhookUrl: string, variableName: string }
 - DISCORD: data: { content: string, webhookUrl: string, variableName: string }
 - GMAIL: data: { to: string, subject: string, body: string, variableName: string }
-- GOOGLE_SHEETS: data: { 
+- GOOGLE_SHEETS: data: {
     variableName: string,
     action: "append" | "read" | "update" | "delete_rows" | "create_spreadsheet" | "create_sheet" | "batch_update",
-    spreadsheetId?: string,         // required for most actions (except create_spreadsheet)
-    sheetName?: string,              // required for sheet-level actions
-    range?: string,                  // e.g., "Sheet1!A2:C10" (for read/update/delete_rows)
-    data?: string,                   // JSON array/object for append/update
-    newSheetName?: string,           // for create_sheet
-    spreadsheetTitle?: string,       // for create_spreadsheet
-    batchOperations?: string          // JSON array of operations for batch_update
+    spreadsheetId?: string,
+    sheetName?: string,
+    range?: string,
+    data?: string,
+    newSheetName?: string,
+    spreadsheetTitle?: string,
+    batchOperations?: string
+  }
+- GOOGLE_DRIVE: data: {
+    variableName: string,
+    action: "read" | "search",
+    fileId?: string,
+    searchQuery?: string
   }
 - CODE: data: { code: string, variableName: string }
-  - The CODE node's code is executed in a sandbox. It receives a single parameter called 'context' that contains all previous node outputs keyed by their variableName. The code must return a value, which will be stored under the CODE node's variableName.
-  - Example: To access the output of a previous HTTP request node with variableName 'users' and extract the data array, write: 
-    const usersData = context.users.httpResponse.data;
-    return usersData.map(u => ({ name: u.name, email: u.email }));
-- IF: data: { condition: string }                      // condition expression
-- SWITCH: data: { switchValue: string, cases: Array<{ case: string, nextNodeId: string }> }  // simplified
+  - Executed in a sandbox with parameter context (prior outputs keyed by variableName). Must return a value stored under this node's variableName.
+  - Example: const usersData = context.users.httpResponse.data; return JSON.parse(usersData);
+- IF: data: { condition: string }
+- SWITCH: data: { switchValue: string, cases: Array<{ case: string, nextNodeId: string }> }
 - FILTER: data: { sourceVariable: string, condition: string, variableName: string }
-  - Filters an array stored under 'sourceVariable' using a JavaScript condition that refers to each item as 'item'. Outputs a new array with items that satisfy the condition.
-  - Example: sourceVariable: "users", condition: "item.age > 18 && item.active === true", variableName: "adults"
-- LOOP: data: { sourceVariable: string, itemVariable: string, body: string, variableName: string, execution?: "sequential" | "parallel" }
-  - Iterates over the array in 'sourceVariable', executes the JavaScript 'body' for each item, and collects the return values into a new array.
-  - The current item is available under the name specified in 'itemVariable' (default "item"). Use 'return' to emit a value.
-  - Execution mode: "sequential" (default) processes items one after another; "parallel" runs all concurrently.
-  - Example: sourceVariable: "userIds", itemVariable: "id", body: "return fetch('/api/user/' + id).then(r => r.json());", variableName: "profiles"
-- GOOGLE_FORM_TRIGGER: data: { formId: string, webhookUrl: string }   // may need adjustment
+  - Filters array at sourceVariable; each element is referenced as item in condition. Output is a new array under variableName.
+- LOOP: data: { sourceVariable: string, itemVariable: string, body: string, variableName: string, execution: "sequential" | "parallel" }
+  - sourceVariable: name of a prior output that MUST be an array (e.g. jobs from CODE). If the value is nested, use CODE first to expose a top-level array under one variableName.
+  - itemVariable: logical name for one element (e.g. "job") — used in documentation and downstream {{...}} hints; use a single word in camelCase.
+  - variableName: where this node's output is stored (same array is passed through for orchestration).
+  - execution: always set explicitly — use "sequential" unless the user requires parallel.
+  - body: MUST be present. The runtime does not execute this string as JavaScript; use "" (empty string). Do NOT put multi-line code, fetch(), or unescaped quotes here — it breaks JSON. For per-item transforms, use FILTER/CODE/ANTHROPIC nodes after LOOP in the linear chain, referencing the array under variableName and item shapes in prompts.
+  - Do not model "nested subgraphs" inside LOOP. The graph stays one straight line: each connection links one node to the next only.
+- GOOGLE_FORM_TRIGGER: data: { formId: string, webhookUrl: string }
 - STRIPE_TRIGGER: data: { eventType: string, webhookUrl: string }
 
 CRITICAL:
-- The "nodes" array must have at least one node (always start with a MANUAL_TRIGGER).
-- The "connections" array must connect nodes in linear order.
-- All fields in each node's "data" object are REQUIRED. Use empty strings for unknown values, empty objects {} for optional objects.
-- Variable referencing inside prompts must use the correct nested field (e.g., {{youtubeTranscript.transcript}}), not just the variable name.
-- Node positions: first node at (100,100), then (260,100), (420,100), etc.
-- Do not include any fields beyond those listed.
+- The "nodes" array must have at least one node; the first must be MANUAL_TRIGGER for user-described automations.
+- Connections form a single linear chain: node1 → node2 → … → nodeN (each node has at most one incoming and one outgoing connection in this chain). fromNodeId/toNodeId must match real node ids in the same workflow. No duplicate edges for the same from→to pair with same handles.
+- Variable references in prompts: use nested paths (e.g. {{api.httpResponse.data}}, {{anthropicVar.aiResponse}}).
+- Node positions: (100,100), (260,100), (420,100), …
+- Only use property keys documented for each node type; no arbitrary extra keys on node objects outside id, name, type, data, position.
 
 Example of a question chunk:
 {"type":"question","content":"Which AI model would you like to use? (claude, gemini, openai)"}
