@@ -1,7 +1,7 @@
 import { streamText } from "ai";
-import { createAnthropic } from "@ai-sdk/anthropic";
 import { NextResponse } from "next/server";
 import { STREAMING_SYSTEM_PROMPT } from "@/lib/prompts";
+import { getModel } from "@/lib/benchmark-model";
 
 export const runtime = "edge"; // optional, improves streaming performance
 
@@ -13,14 +13,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid prompt" }, { status: 400 });
     }
 
-    const anthropic = createAnthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    const url = new URL(req.url);
+    const isBenchmark = url.searchParams.get("benchmark") === "true";
 
     const result = streamText({
-      model: anthropic("claude-sonnet-4-5"),
+      model: getModel(isBenchmark),
       system: STREAMING_SYSTEM_PROMPT,
       prompt,
+      temperature: isBenchmark ? 0 : 0.7,
     });
 
     return result.toTextStreamResponse();

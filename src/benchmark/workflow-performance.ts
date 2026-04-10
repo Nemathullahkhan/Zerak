@@ -5,7 +5,10 @@ import { Node, Connection } from "@/generated/prisma/client";
  * Benchmark utility for measuring topological sort performance
  * as a function of node and connection count.
  */
-export function benchmarkTopologicalSort(nodeCount: number, connectivity: number) {
+export function benchmarkTopologicalSort(
+  nodeCount: number,
+  connectivity: number,
+) {
   const nodes: Node[] = [];
   const connections: Connection[] = [];
 
@@ -51,8 +54,8 @@ if (require.main === module) {
     const result = benchmarkTopologicalSort(n, c);
     console.log(
       `${result.nodeCount.toString().padEnd(5)} | ` +
-      `${result.connectionCount.toString().padEnd(11)} | ` +
-      `${result.durationMs.toFixed(4)}`
+        `${result.connectionCount.toString().padEnd(11)} | ` +
+        `${result.durationMs.toFixed(4)}`,
     );
   });
 }

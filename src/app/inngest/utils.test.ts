@@ -45,7 +45,7 @@ describe("topologicalSort", () => {
     ] as Connection[];
 
     expect(() => topologicalSort(nodes, connections)).toThrow(
-      "WOrkflow contains a cycle"
+      "WOrkflow contains a cycle",
     );
   });
 
