@@ -17,6 +17,7 @@ Create 140 high-fidelity "golden prompts" stratified by complexity, including ex
 - **Rules:**
   - Every prompt must include `expected_nodes`, `expected_edges`, and `expected_variables`
   - Stratification must follow: 40 Easy (29%), 60 Medium (43%), 40 Hard (29%)
+  - AI tasks must exclusively use the `MISTRAL` node type for benchmarking consistency
   - Node types must cover all 10+ supported types in the `executor-registry.ts`
 
 ## 3. Context & Constraints
@@ -27,7 +28,9 @@ Create 140 high-fidelity "golden prompts" stratified by complexity, including ex
 - **Dependencies:** `zod` (for schema validation of the dataset)
 - **Constraints:**
   - Expected edges must only use node IDs from the `expected_nodes` list
-  - Variable names must be consistent with the prompts (e.g., if the prompt mentions "log result", expected variable should be `result`)
+  - Variable names must be consistent with the prompts
+  - **Exclusively use MISTRAL node for all AI-related tasks during this benchmark phase**
+  - Scripts must be idempotent (can be re-run without corrupting data)
 
 ## 4. Implementation Plan
 
@@ -89,20 +92,19 @@ export { PromptSchema, InvalidDAGSchema };
 [
   {
     "id": "wf_001",
-    "prompt": "When a Google Form is submitted, append the response to a Google Sheet and send a Slack notification",
+    "prompt": "Summarize the submission of a Google Form using AI and send it to Slack",
     "complexity": "easy",
-    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS", "SLACK"],
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "MISTRAL", "SLACK"],
     "expected_edges": [
-      ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
-      ["GOOGLE_SHEETS", "SLACK"]
+      ["GOOGLE_FORM_TRIGGER", "MISTRAL"],
+      ["MISTRAL", "SLACK"]
     ],
-    "expected_variables": ["formData", "sheetResult"],
+    "expected_variables": ["formData", "aiSummary"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true
   }
-  // ... rest of the 140 prompts
 ]
 ```
 

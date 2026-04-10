@@ -1,472 +1,662 @@
 [
   {
     "id": "inv_001",
-    "category": "cycle",
-    "description": "Three-node cycle: A sends to B, B sends to C, C sends back to A",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_SHEETS", "variableName": "sheetData" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult" },
-      { "id": "n3", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n3", "target": "n1" }
-    ],
-    "expected_error": "CYCLE_DETECTED"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_002",
-    "category": "cycle",
-    "description": "Self-loop: a node connects to itself",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "CODE", "variableName": "codeResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n2" }
-    ],
-    "expected_error": "CYCLE_DETECTED"
+    "connections": []
   },
   {
     "id": "inv_003",
-    "category": "cycle",
-    "description": "Two-node mutual cycle",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "ANTHROPIC", "variableName": "result1" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "result2" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n1" }
-    ],
-    "expected_error": "CYCLE_DETECTED"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_004",
-    "category": "cycle",
-    "description": "Longer cycle nested inside a valid chain",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n2", "type": "GOOGLE_SHEETS", "variableName": "sheetData" },
-      { "id": "n3", "type": "ANTHROPIC", "variableName": "aiOut" },
-      { "id": "n4", "type": "IF", "variableName": "branchResult" },
-      { "id": "n5", "type": "SLACK", "variableName": "slackOut" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n3", "target": "n4" },
-      { "source": "n4", "target": "n5" },
-      { "source": "n4", "target": "n2" }
-    ],
-    "expected_error": "CYCLE_DETECTED"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_005",
-    "category": "cycle",
-    "description": "Diamond with back-edge creating cycle",
+    "category": "Multiple triggers",
     "nodes": [
-      { "id": "n1", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n2", "type": "IF", "variableName": "branch" },
-      { "id": "n3", "type": "GOOGLE_GMAIL", "variableName": "emailResult" },
-      { "id": "n4", "type": "SLACK", "variableName": "slackResult" },
-      { "id": "n5", "type": "GOOGLE_SHEETS", "variableName": "sheetResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n2", "target": "n4" },
-      { "source": "n3", "target": "n5" },
-      { "source": "n4", "target": "n5" },
-      { "source": "n5", "target": "n2" }
-    ],
-    "expected_error": "CYCLE_DETECTED"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   },
   {
     "id": "inv_006",
-    "category": "orphan_node",
-    "description": "Single node with no edges at all",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [],
-    "expected_error": "ORPHAN_NODE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_007",
-    "category": "orphan_node",
-    "description": "Node connected at start but output has no target",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult" },
-      { "id": "n3", "type": "GOOGLE_SHEETS", "variableName": "sheetResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "ORPHAN_NODE"
+    "connections": []
   },
   {
     "id": "inv_008",
-    "category": "orphan_node",
-    "description": "Disconnected subgraph — two valid chains not connected to each other",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult" },
-      { "id": "n3", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n4", "type": "GOOGLE_GMAIL", "variableName": "emailResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "MULTIPLE_ROOTS"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_009",
-    "category": "orphan_node",
-    "description": "Node with incoming edge but no outgoing — not a terminal node by design",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "IF", "variableName": "branch" },
-      { "id": "n3", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
-    ],
-    "expected_error": "MISSING_BRANCH_OUTPUT",
-    "notes": "IF node must have two output edges. Only one defined here."
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_010",
-    "category": "orphan_node",
-    "description": "Completely isolated middle node with no connections",
+    "category": "Multiple triggers",
     "nodes": [
-      { "id": "n1", "type": "SCHEDULE_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult" },
-      { "id": "n3", "type": "GOOGLE_SHEETS", "variableName": "sheetResult" },
-      { "id": "n4", "type": "CODE", "variableName": "codeResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
-    ],
-    "expected_error": "ORPHAN_NODE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   },
   {
     "id": "inv_011",
-    "category": "bad_variable_reference",
-    "description": "Node references a variable that was never defined in any upstream node",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "GOOGLE_GMAIL", "variableName": "emailResult",
-        "data": { "to": "{{nonExistentNode.email}}", "body": "{{formData.message}}" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "UNDEFINED_VARIABLE_REFERENCE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_012",
-    "category": "bad_variable_reference",
-    "description": "Node references output of a downstream node (forward reference)",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult",
-        "data": { "prompt": "Summarise: {{sheetData.value}}" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
       },
-      { "id": "n3", "type": "GOOGLE_SHEETS", "variableName": "sheetData" }
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
-    ],
-    "expected_error": "UNDEFINED_VARIABLE_REFERENCE",
-    "notes": "n2 references sheetData which is produced by n3 — forward reference"
+    "connections": []
   },
   {
     "id": "inv_013",
-    "category": "bad_variable_reference",
-    "description": "Misspelled variable name — close but not matching any defined variable",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult",
-        "data": { "message": "{{webhookdata.message}}" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "UNDEFINED_VARIABLE_REFERENCE",
-    "notes": "webhookdata (lowercase d) vs webhookData (camelCase) — case sensitivity test"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_014",
-    "category": "bad_variable_reference",
-    "description": "Empty variable name in Handlebars template",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "GOOGLE_GMAIL", "variableName": "emailResult",
-        "data": { "body": "{{.field}}" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "INVALID_TEMPLATE_SYNTAX"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_015",
-    "category": "bad_variable_reference",
-    "description": "Variable from a branch not taken referenced in a later shared node",
+    "category": "Multiple triggers",
     "nodes": [
-      { "id": "n1", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n2", "type": "IF", "variableName": "branch" },
-      { "id": "n3", "type": "ANTHROPIC", "variableName": "vipMessage" },
-      { "id": "n4", "type": "GOOGLE_GMAIL", "variableName": "emailResult",
-        "data": { "body": "{{vipMessage.text}}" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n2", "target": "n4" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "CONDITIONAL_VARIABLE_REFERENCE",
-    "notes": "n4 on the false branch references vipMessage which only exists on true branch"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   },
   {
     "id": "inv_016",
-    "category": "missing_credential",
-    "description": "Gmail node with no credential linked",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "GOOGLE_GMAIL", "variableName": "emailResult",
-        "credentialId": null,
-        "data": { "to": "user@example.com", "subject": "Hello", "body": "Test" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "MISSING_CREDENTIAL"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_017",
-    "category": "missing_credential",
-    "description": "Google Sheets node referencing a deleted credential ID",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "GOOGLE_SHEETS", "variableName": "sheetResult",
-        "credentialId": "deleted-cred-id-999",
-        "data": { "spreadsheetId": "abc123", "range": "A:Z" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "INVALID_CREDENTIAL"
+    "connections": []
   },
   {
     "id": "inv_018",
-    "category": "missing_credential",
-    "description": "Anthropic node with no API key credential",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult",
-        "credentialId": null,
-        "data": { "prompt": "Summarise this", "model": "claude-sonnet-4-20250514" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "MISSING_CREDENTIAL"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_019",
-    "category": "missing_credential",
-    "description": "Slack node with wrong credential type (Gmail credential used for Slack)",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult",
-        "credentialId": "gmail-cred-id-001",
-        "data": { "channel": "#general", "message": "Hello" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
       }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "WRONG_CREDENTIAL_TYPE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_020",
-    "category": "missing_credential",
-    "description": "Multiple nodes all missing credentials in the same workflow",
+    "category": "Multiple triggers",
     "nodes": [
-      { "id": "n1", "type": "SCHEDULE_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "GOOGLE_SHEETS", "variableName": "sheetData", "credentialId": null },
-      { "id": "n3", "type": "ANTHROPIC", "variableName": "aiResult", "credentialId": null },
-      { "id": "n4", "type": "SLACK", "variableName": "slackResult", "credentialId": null }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "MISSING_CREDENTIAL",
-    "notes": "Should report all three missing credentials, not just the first"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   },
   {
     "id": "inv_021",
-    "category": "no_trigger",
-    "description": "Workflow with no trigger node — starts with a regular action node",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_SHEETS", "variableName": "sheetData" },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "NO_TRIGGER_NODE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_022",
-    "category": "no_trigger",
-    "description": "Workflow with only a single action node and no trigger",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "ANTHROPIC", "variableName": "aiResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [],
-    "expected_error": "NO_TRIGGER_NODE"
+    "connections": []
   },
   {
     "id": "inv_023",
-    "category": "no_trigger",
-    "description": "Complex workflow where trigger node type is misclassified as action",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData",
-        "isAction": true
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
       },
-      { "id": "n2", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" }
-    ],
-    "expected_error": "NO_TRIGGER_NODE",
-    "notes": "Tests that trigger detection is based on node type, not a flag"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_024",
-    "category": "no_trigger",
-    "description": "Three action nodes chained with no trigger",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "CODE", "variableName": "codeResult" },
-      { "id": "n2", "type": "ANTHROPIC", "variableName": "aiResult" },
-      { "id": "n3", "type": "GOOGLE_GMAIL", "variableName": "emailResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" }
-    ],
-    "expected_error": "NO_TRIGGER_NODE"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_025",
-    "category": "no_trigger",
-    "description": "Empty workflow — no nodes at all",
-    "nodes": [],
-    "edges": [],
-    "expected_error": "EMPTY_WORKFLOW"
+    "category": "Multiple triggers",
+    "nodes": [
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
+      }
+    ],
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   },
   {
     "id": "inv_026",
-    "category": "multiple_triggers",
-    "description": "Two trigger nodes both at root level with separate downstream paths",
+    "category": "Cycle",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n3", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n3" },
-      { "source": "n2", "target": "n3" }
-    ],
-    "expected_error": "MULTIPLE_TRIGGER_NODES"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "A"
+      }
+    ]
   },
   {
     "id": "inv_027",
-    "category": "multiple_triggers",
-    "description": "Two triggers with completely separate chains — no shared nodes",
+    "category": "Orphan node",
     "nodes": [
-      { "id": "n1", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n2", "type": "GOOGLE_SHEETS", "variableName": "sheetResult" },
-      { "id": "n3", "type": "SCHEDULE_TRIGGER", "variableName": "scheduleData" },
-      { "id": "n4", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "MULTIPLE_TRIGGER_NODES"
+    "connections": []
   },
   {
     "id": "inv_028",
-    "category": "multiple_triggers",
-    "description": "Three trigger nodes in the same workflow",
+    "category": "Bad variable reference",
     "nodes": [
-      { "id": "n1", "type": "GOOGLE_FORM_TRIGGER", "variableName": "formData" },
-      { "id": "n2", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n3", "type": "WEBHOOK_TRIGGER", "variableName": "webhookData" },
-      { "id": "n4", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "SLACK",
+        "data": {
+          "content": "{{missing_var}}"
+        }
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n4" },
-      { "source": "n2", "target": "n4" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "MULTIPLE_TRIGGER_NODES"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_029",
-    "category": "multiple_triggers",
-    "description": "Manual trigger alongside a scheduled trigger — ambiguous start condition",
+    "category": "No trigger",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "SCHEDULE_TRIGGER", "variableName": "scheduleData" },
-      { "id": "n3", "type": "ANTHROPIC", "variableName": "aiResult" },
-      { "id": "n4", "type": "GOOGLE_GMAIL", "variableName": "emailResult" }
+      {
+        "id": "A",
+        "type": "MISTRAL"
+      },
+      {
+        "id": "B",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n3" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "MULTIPLE_TRIGGER_NODES"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "B"
+      }
+    ]
   },
   {
     "id": "inv_030",
-    "category": "multiple_triggers",
-    "description": "Trigger node appearing mid-workflow as if it were an action node",
+    "category": "Multiple triggers",
     "nodes": [
-      { "id": "n1", "type": "MANUAL_TRIGGER", "variableName": "triggerData" },
-      { "id": "n2", "type": "GOOGLE_SHEETS", "variableName": "sheetData" },
-      { "id": "n3", "type": "STRIPE_TRIGGER", "variableName": "paymentData" },
-      { "id": "n4", "type": "SLACK", "variableName": "slackResult" }
+      {
+        "id": "A",
+        "type": "MANUAL_TRIGGER"
+      },
+      {
+        "id": "B",
+        "type": "GOOGLE_FORM_TRIGGER"
+      },
+      {
+        "id": "C",
+        "type": "SLACK"
+      }
     ],
-    "edges": [
-      { "source": "n1", "target": "n2" },
-      { "source": "n2", "target": "n3" },
-      { "source": "n3", "target": "n4" }
-    ],
-    "expected_error": "TRIGGER_NODE_NOT_AT_ROOT",
-    "notes": "STRIPE_TRIGGER appears as a mid-chain node — invalid position"
+    "connections": [
+      {
+        "fromNodeId": "A",
+        "toNodeId": "C"
+      },
+      {
+        "fromNodeId": "B",
+        "toNodeId": "C"
+      }
+    ]
   }
 ]
