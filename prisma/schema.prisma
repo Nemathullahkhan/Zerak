@@ -97,6 +97,7 @@ enum CredentialType {
   OPENAI
   ANTHROPIC
   GEMINI
+  MISTRAL
 
 }
 
@@ -128,6 +129,7 @@ enum NodeType {
   ANTHROPIC
   GEMINI
   OPENAI
+  MISTRAL
   CONTENT_SOURCE
   DISCORD
   SLACK

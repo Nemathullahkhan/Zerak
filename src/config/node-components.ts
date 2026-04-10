@@ -5,6 +5,7 @@ import { ContentSourceNode } from "@/features/executions/components/content-sour
 import { DiscordNode } from "@/features/executions/components/discord/node";
 import { FilterNode } from "@/features/executions/components/filter/node";
 import { GeminiNode } from "@/features/executions/components/gemini/node";
+import { MistralNode } from "@/features/executions/components/mistral/node";
 import { GmailNode } from "@/features/executions/components/gmail/node";
 import { GoogleDriveNode } from "@/features/executions/components/google-drive/node";
 import { GoogleSheetsNode } from "@/features/executions/components/google-sheet/node";
@@ -30,6 +31,7 @@ export const nodeComponents = {
   [NodeType.GOOGLE_FORM_TRIGGER]: GoogleFormTrigger,
   [NodeType.STRIPE_TRIGGER]: StripeTriggerNode,
   [NodeType.GEMINI]: GeminiNode,
+  [NodeType.MISTRAL]: MistralNode,
   [NodeType.OPENAI]: OpenAiNode,
   [NodeType.ANTHROPIC]: AnthropicNode,
   [NodeType.CONTENT_SOURCE]: ContentSourceNode,

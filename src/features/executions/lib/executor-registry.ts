@@ -5,6 +5,7 @@ import { manualTriggerExecutor } from "@/features/triggers/components/manual-tri
 import { httpRequestExecutor } from "../components/http-request/executor";
 import { googleFormTriggerExecutor } from "@/features/triggers/components/google-form-trigger/executor";
 import { geminiExecutor } from "../components/gemini/executor";
+import { mistralExecutor } from "../components/mistral/executor";
 import { OpenAiExecutor } from "../components/openai/executor";
 import { AnthropicExecutor } from "../components/anthropic/executor";
 import { discordExecutor } from "../components/discord/executor";
@@ -25,6 +26,7 @@ export const executorRegistry: Record<NodeType, NodeExecutor> = {
   [NodeType.GOOGLE_FORM_TRIGGER]: googleFormTriggerExecutor,
   [NodeType.STRIPE_TRIGGER]: manualTriggerExecutor, //TODO: ADD STRIPE EXECUTOR
   [NodeType.GEMINI]: geminiExecutor,
+  [NodeType.MISTRAL]: mistralExecutor,
   [NodeType.ANTHROPIC]: AnthropicExecutor, // TODO: FIX later
   [NodeType.OPENAI]: OpenAiExecutor, // TODO: FIX later
   [NodeType.CONTENT_SOURCE]: contentSourceExecutor,

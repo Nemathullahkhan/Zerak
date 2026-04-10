@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       model: getModel(isBenchmark),
       system: STREAMING_SYSTEM_PROMPT,
       prompt,
-      temperature: isBenchmark ? 0 : 0.7,
+    temperature: isBenchmark ? 0 : 0.7,
     });
 
     return result.toTextStreamResponse();

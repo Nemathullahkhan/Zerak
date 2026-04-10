@@ -116,6 +116,12 @@ const executionNodes: NodeTypeOption[] = [
     icon: "/logos/anthropic.svg",
   },
   {
+    type: NodeType.MISTRAL,
+    label: "Mistral",
+    description: "Uses Mistral AI to generate text",
+    icon: "/logos/mistral.svg",
+  },
+  {
     type: NodeType.DISCORD,
     label: "Discord",
     description: "Send a message to Discord.",

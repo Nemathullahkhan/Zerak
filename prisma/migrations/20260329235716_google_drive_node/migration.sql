@@ -1,2 +1,2 @@
-﻿-- AlterEnum
+-- AlterEnum
 ALTER TYPE "NodeType" ADD VALUE 'GOOGLE_DRIVE';

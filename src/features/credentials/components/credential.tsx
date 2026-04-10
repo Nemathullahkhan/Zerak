@@ -63,6 +63,11 @@ const credentialTypeOptions = [
     label: "Gemini",
     logo: "/logos/gemini.svg",
   },
+  {
+    value: CredentialType.MISTRAL,
+    label: "Mistral",
+    logo: "/logos/mistral.svg",
+  },
   // TODO: Add google credential for google sheet, forms, ete
 ];
 
