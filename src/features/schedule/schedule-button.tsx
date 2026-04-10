@@ -20,9 +20,9 @@ export function ScheduleButton({ workflowId }: { workflowId: string }) {
         variant={isScheduled ? "default" : "outline"}
         onClick={() => setOpen(true)}
         className={cn(
-          "gap-2",
+          "gap-2 h-9 px-4",
           isScheduled &&
-            "border-purple-500 text-purple-100 bg-purple-600 hover:bg-purple-700",
+            "border-purple-500/50 text-purple-100 bg-purple-600 hover:bg-purple-700 shadow-sm",
         )}
       >
         <ClockIcon className="size-4" />

@@ -36,12 +36,19 @@ export const EditorSaveButton = ({ workflowId }: { workflowId: string }) => {
     saveWorkflow.mutate({ id: workflowId, nodes, edges });
   };
   return (
-    <div className="ml-auto">
+    <div className="flex items-center gap-2">
       <ScheduleButton workflowId={workflowId} />
-      <Button>Export</Button>
-      <Button size="sm" onClick={handleSave} disabled={saveWorkflow.isPending}>
+      <Button variant="secondary" size="sm" className="h-9 px-4">
+        Export
+      </Button>
+      <Button
+        size="sm"
+        onClick={handleSave}
+        disabled={saveWorkflow.isPending}
+        className="h-9 px-4 gap-2 shadow-sm"
+      >
         <SaveIcon className="size-4" />
-        Save
+        {saveWorkflow.isPending ? "Saving..." : "Save"}
       </Button>
     </div>
   );
@@ -101,7 +108,7 @@ export const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
         onChange={(e) => setName(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className="h-7 w-auto min-w-[100px] pt-2"
+        className="h-8 w-auto min-w-[150px] font-medium"
       />
     );
   }
@@ -109,7 +116,7 @@ export const EditorNameInput = ({ workflowId }: { workflowId: string }) => {
   return (
     <BreadcrumbItem
       onClick={() => setIsEditing(true)}
-      className="cursor-pointer hover:text-foreground transition-colors "
+      className="cursor-pointer hover:text-foreground transition-colors font-semibold text-foreground/90"
     >
       {workflow.name}
     </BreadcrumbItem>
@@ -135,9 +142,9 @@ export const EditorBreadcrumbs = ({ workflowId }: { workflowId: string }) => {
 };
 export const EditorHeader = ({ workflowId }: { workflowId: string }) => {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 bg-background">
-      <SidebarTrigger />
-      <div className="flex flex-row items-center justify-between gap-x-4 w-full">
+    <header className="flex h-16 shrink-0 items-center gap-4 border-b px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <SidebarTrigger className="-ml-2" />
+      <div className="flex flex-1 items-center justify-between gap-4">
         <EditorBreadcrumbs workflowId={workflowId} />
         <EditorSaveButton workflowId={workflowId} />
       </div>

@@ -9,11 +9,13 @@ export const AddNodeButton = memo(() => {
   const [selectorOpen, setSelectorOpen] = useState(false);
   return (
     <NodeSelector open={selectorOpen} onOpenChange={setSelectorOpen}>
-      <div className="p-0.5 bg-zinc-800 rounded-md">
-        <Button size="icon" variant="outline" className="bg-background">
-          <PlusIcon className="size-4" />
-        </Button>
-      </div>
+      <Button
+        size="icon"
+        variant="outline"
+        className="h-9 w-9 bg-background hover:bg-muted shadow-sm border-border/50"
+      >
+        <PlusIcon className="size-4" />
+      </Button>
     </NodeSelector>
   );
 });

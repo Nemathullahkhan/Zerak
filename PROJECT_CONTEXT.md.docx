@@ -1,0 +1,113 @@
+# Zerak — Master Context Document
+**Version:** 2026-04-09
+**Purpose:** LLM context window reference for development, debugging, and feature work
+
+---
+
+## 1. Project Overview
+Zerak is an AI-native workflow automation platform designed to simplify the creation, execution, and monitoring of complex automated tasks. It allows users to build workflows using a visual drag-and-drop editor or by describing their needs in natural language (NLP). The core problem it solves is the high barrier to entry for building reliable, AI-integrated automations by providing pre-execution cost estimation, parallel Directed Acyclic Graph (DAG) execution, and high-fidelity real-time monitoring. It is aimed at both non-technical users (via NLP) and developers who need robust, scheduled, or trigger-based automations. The project is currently in an advanced development stage with a functional editor, real-time execution engine, and multiple external integrations.
+
+## 2. Tech Stack (Quick Reference Table)
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| Frontend | Next.js (App Router) | 15.5.4 | React framework for UI and API routes |
+| UI Components | Tailwind CSS / Shadcn UI | - | Styling and accessible component primitives |
+| Flow Editor | @xyflow/react | 12.10.1 | Visual workflow graph editor |
+| State Management | Jotai | 2.18.0 | Atomic state management for editor and sidebars |
+| Data Fetching | TanStack Query / tRPC | 5.90 / 11.10 | Type-safe API client and server communication |
+| Backend / Runtime | Inngest | 3.44.1 | Workflow orchestration and background job engine |
+| Database | PostgreSQL (Neon) | - | Serverless relational database |
+| ORM | Prisma | 7.4.0 | Database client and schema management |
+| Authentication | Better Auth | 1.4.18 | Unified authentication for Next.js |
+| AI Integration | AI SDK (Vercel) | 6.0.86 | Unified interface for LLMs (Anthropic, OpenAI, Gemini) |
+| Templating | Handlebars | 4.7.8 | Variable interpolation in prompts and data fields |
+
+## 3. Project Structure
+- `prisma/`: Contains `schema.prisma` defining the data models and `migrations/`.
+- `public/`: Static assets including SVG logos for all supported node types.
+- `scripts/`: TypeScript utility scripts for seeding demo templates and workflows.
+- `src/app/`: Next.js App Router structure.
+    - `(auth)/`: Authentication pages (login, signup).
+    - `(dashboard)/`: Core application pages (dashboard, editor, credentials, executions).
+    - `api/`: Backend API routes including Inngest endpoints, tRPC, and webhooks.
+    - `inngest/`: Inngest client configuration, utilities, and real-time channels for node status updates.
+- `src/components/`: Shared UI components, including the custom `WorkflowNLP` composer and React Flow wrappers.
+- `src/features/`: Domain-driven feature modules.
+    - `editor/`: Visual flow editor logic, store (Jotai), and specialized UI panels.
+    - `executions/`: Real-time execution engine, sidebar, and per-node executors.
+    - `triggers/`: Trigger-specific nodes (Manual, Webhooks).
+    - `workflows/`: Workflow management (CRUD, generation from prompt).
+- `src/lib/`: Utility libraries for auth, encryption, templates, and core business logic.
+- `src/trpc/`: tRPC server and client initialization and router definitions.
+
+## 4. Architecture & Design
+- **Event-Driven Orchestration:** The core execution engine is powered by **Inngest**. Workflows are not executed in a single request but orchestrated as a series of durable steps.
+- **Topological Execution:** Workflows are Directed Acyclic Graphs (DAGs). Before execution, nodes are sorted topologically to ensure dependencies are resolved correctly.
+- **Real-Time Feedback:** The execution engine uses a pub/sub pattern via Inngest "channels" to push status updates (`PENDING`, `RUNNING`, `SUCCESS`, `FAILED`) to the frontend via server-sent events or polling.
+- **Variable Context:** Each node produces an output stored in a global `context` object keyed by the node's `variableName`. Subsequent nodes reference these using Handlebars syntax (e.g., `{{nodeVar.field}}`).
+- **Linear Stream Generation:** The NLP generator uses a "Thinking" pattern, emitting intent, plans, and partial nodes as a stream of JSON chunks before finalizing the workflow.
+
+## 5. Core Data Models
+- **User:** Stores profile and account info. Linked to Workflows and Credentials.
+- **Workflow:** The root entity for an automation. Contains multiple `Nodes` and `Connections`.
+- **Node:** A single step in a workflow. Stores `type`, `position`, and `data` (JSON). Can link to a `Credential`.
+- **Connection:** Links two nodes from an output handle to an input handle.
+- **Execution:** A record of a workflow run. Stores `status`, `output` (final context), and `__metadata__` (timings and per-node status).
+- **Credential:** Encrypted storage for API keys (OpenAI, Anthropic, etc.), scoped to a user.
+- **ScheduledWorkflow:** Stores CRON expressions and next run times for automated triggers.
+
+## 6. API Reference
+- **tRPC (`/api/trpc`):** The primary internal API for the frontend.
+    - `workflows`: CRUD operations, manual execution trigger, and LLM-based generation.
+    - `executions`: Fetching run history and real-time status polling.
+    - `credentials`: Managing encrypted API keys.
+    - `analysis`: AI-powered workflow optimization and cost/performance analysis.
+- **Inngest (`/api/inngest`):** Endpoint for the Inngest runner to fetch and execute functions.
+- **Webhooks (`/api/webhooks/google-form`):** Entry point for external triggers.
+- **Streaming (`/api/workflow/stream`):** Edge-runtime endpoint for streaming NLP workflow generation.
+
+## 7. Authentication & Authorization
+- **Better Auth:** Handles session management using database-backed sessions.
+- **Social Providers:** Supports GitHub and Google (with offline access for Gmail/Drive scopes).
+- **Protected Procedures:** All tRPC mutations and queries (except public landing pages) are wrapped in `protectedProcedure` which verifies the session and injects the `user` object into the context.
+- **Ownership:** Database queries always filter by `userId` to ensure users only access their own workflows, credentials, and executions.
+
+## 8. Business Logic & Domain Rules
+- **Durable Execution:** If a node fails, Inngest handles retries (in production) or fails the execution record gracefully.
+- **Template Resolution:** The `resolveTemplate` utility replaces `{{variable}}` placeholders in node data with actual values from the execution context using Handlebars.
+- **Sandbox Execution:** `CODE` nodes run in a `vm` sandbox with a 5-second timeout to prevent infinite loops or system access.
+- **Branching Logic:** `IF` nodes evaluate conditions and set a `__branch__` flag in the context, which the orchestrator uses to skip unreachable nodes.
+- **Looping:** `LOOP` nodes iterate over arrays, executing sub-nodes for each item and collecting results.
+
+## 9. External Integrations
+- **AI Providers:** OpenAI, Anthropic, Gemini (via Vercel AI SDK).
+- **Google Services:** Sheets (read/write/append), Drive (search/read), Gmail (send), Forms (trigger).
+- **Messaging:** Slack and Discord via Webhooks.
+- **Payments:** Stripe (Trigger-based events).
+
+## 10. Configuration & Environment Variables
+- `DATABASE_URL`: PostgreSQL connection string (Neon with pooling enabled).
+- `BETTER_AUTH_SECRET`: Secret for signing auth tokens.
+- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`: API keys for the "System" models (used for generation and analysis).
+- `ENCRYPTION_KEY`: 32-byte hex key for encrypting user credentials in the DB.
+- `NEXT_PUBLIC_APP_URL`: Base URL for webhooks and auth callbacks.
+
+## 11. Testing
+- **Manual Verification:** Utility scripts in `scripts/` are used to test seeding and DB operations.
+- **Inngest Dev Server:** Used for local testing of background functions.
+- **Node-Level Testing:** The editor allows "Testing" individual nodes by providing a mock context.
+
+## 12. Known Issues, TODOs & Tech Debt
+- **TODOs:** Missing `STRIPE` executor implementation; `FILTER` and `LOOP` executors need further refinement for complex nesting.
+- **Tech Debt:** Some executors (`Anthropic`, `OpenAI`) have "FIX later" comments regarding unified usage tracking.
+- **Performance:** React Flow components are heavy and use dynamic imports to minimize initial bundle size.
+
+## 13. Glossary
+- **Node:** A functional block in the workflow.
+- **Executor:** A server-side function that performs the action defined by a Node.
+- **Context:** The JSON object passed between nodes during execution containing all outputs.
+- **Handle:** A port on a node for incoming or outgoing connections.
+- **Trigger:** A special node type that initiates a workflow run.
+
+## 14. LLM Quick-Reference Summary
+Zerak is a Next.js 15 workflow automation platform using Inngest for durable orchestration and React Flow for visual editing. Workflows are DAGs of nodes (AI, Google Sheets, Gmail, Logic) connected linearly or via branches. Each node has an associated Executor in `src/features/executions/components/[type]/executor.ts` that processes input from a shared `context` and writes output using a `variableName`. The platform supports NLP workflow generation via a streaming API (`/api/workflow/stream`) using Anthropic's Claude. Data is stored in PostgreSQL (Neon) via Prisma, with user API keys encrypted at rest. Real-time monitoring is achieved by polling tRPC endpoints that read execution metadata updated by Inngest steps. When debugging, focus on `src/app/api/inngest/functions.ts` for execution flow and `src/features/executions/lib/executor-registry.ts` for action logic.

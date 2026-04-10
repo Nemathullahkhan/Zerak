@@ -1,0 +1,121 @@
+# Zerak Validation Benchmark Report - Extract
+
+## 1. Overview & Hypotheses
+- Benchmark phases: 5
+- Target prompts: 100–150
+- Eval modules: 5
+- Token reduction target: >30%
+
+### Hypotheses to prove:
+- H1 — Zerak reduces workflow creation time vs manual Inngest coding
+- H2 — NLP → DAG generation achieves F1 ≥ 0.80 on node accuracy
+- H3 — Validation layer catches ≥ 90% of invalid workflow patterns
+- H4 — Zerak uses 30–50% fewer tokens than vanilla ChatGPT prompting
+
+### Evaluation Dimensions:
+| Dimension | Primary metric | Target | Priority |
+| :--- | :--- | :--- | :--- |
+| NLP → DAG accuracy | Node F1 score | ≥ 0.80 | Critical |
+| Validation effectiveness | Recall on invalid DAGs | ≥ 0.90 | Critical |
+| Execution reliability | Run success rate | ≥ 95% | High |
+| Token efficiency | Reduction vs baseline | ≥ 30% | High |
+| Usability (SUS) | SUS score | ≥ 75 | Medium |
+
+---
+
+## 2. Dataset Structure & Complexity
+- Ground truth for evaluating NLP → DAG generation. Run each prompt 3–5×.
+- Structure: { "id": "wf_042", "prompt": "...", "complexity": "medium", "expected_nodes": [...], "expected_edges": [...], "expected_variables": [...], "integration_count": 3 }
+
+### Complexity Tiers:
+- Easy (30%): Linear chains, 2–3 nodes, single integration.
+- Medium (40%): Branching, 4–6 nodes, 2–3 integrations.
+- Hard (30%): Loops + branches, 7+ nodes, multi-integration + AI.
+
+### Coverage Requirements:
+- AI nodes (Anthropic/OpenAI): 25 (Vary model and prompt style)
+- Google Sheets/Drive/Gmail: 20 (Both read and write paths)
+- IF / LOOP / FILTER logic: 20 (Test complex branching)
+- Webhook / Stripe triggers: 15 (Trigger-based workflows)
+- Slack / Discord output: 10 (Notification patterns)
+- CODE sandbox nodes: 10 (Custom transformation steps)
+
+---
+
+## 3. Evaluation Modules & Metrics
+
+### Module 1 — NLP → DAG accuracy
+- Node Precision = |Correct nodes generated| / |Total nodes generated|
+- Node Recall = |Correct nodes generated| / |Expected nodes|
+- Node F1 = 2 × (Precision × Recall) / (Precision + Recall)
+- Edge Accuracy = |Correct edges| / |Expected edges|
+- Var Accuracy = |Correct {{variables}}| / |Expected variables|
+
+### Module 2 — Validation effectiveness
+- Validation Recall = Caught invalid workflows / Total invalid workflows
+- Validation Precision = Correctly flagged / Total flagged
+- False Positive Rate = Falsely flagged valid / Total valid
+- Invalid cases: cycles, orphaned nodes, missing credentials, wrong {{variable}} references, missing required fields.
+
+### Module 3 — Execution reliability
+- Success Rate = Successful runs / Total runs (target ≥ 95%, 100 runs each)
+- MTTR = Mean time from failure event to recovered state
+- Failure dist = Per node-type failure breakdown
+- Simulation: network timeout, API 429, DB disconnect, CODE node infinite loop.
+
+### Module 4 — Token efficiency
+- Efficiency = (Baseline tokens – Zerak tokens) / Baseline tokens
+- Cost saving = (Baseline cost – Zerak cost) / Baseline cost
+- Latency gain = Baseline latency – Zerak latency (ms)
+- Baseline: same prompt sent directly to Claude/GPT-4o without Zerak's optimizer.
+
+### Module 5 — Human evaluation (SUS)
+- SUS Score = ((sum of odd items – 5) + (25 – sum of even items)) × 2.5
+- Target: ≥ 75 (Good), ≥ 85 (Excellent)
+- TTW = Time from receiving task description → first successful execution
+- 10–20 participants: Zerak NLP group vs manual Inngest coding group.
+
+---
+
+## 4. Benchmark Execution Phases
+
+### Phase 1 — Define objectives (1 day)
+- [x] Formalise H1–H4 as null and alternative hypotheses
+- [x] Define exact scope: Zerak NLP editor vs manual Inngest function writing
+- [x] Choose baseline LLM: Claude Sonnet 4.6 (match your system default)
+- [x] Document temperature=0 / deterministic mode for reproducibility
+- [x] Write benchmark protocol document (pre-registration)
+
+### Phase 2 — Build dataset (2–3 days)
+- [x] Write 45 Easy prompts (linear, single integration)
+- [x] Write 60 Medium prompts (branching, 2–3 integrations)
+- [x] Write 45 Hard prompts (loops + AI + multi-integration)
+- [x] For each prompt: fill expected_nodes, expected_edges, expected_variables fields
+- [x] Create 30 intentionally invalid DAGs for validation module
+- [x] Peer-review 10% of entries for correctness
+
+### Phase 3 — Evaluation engine (3–4 days)
+- [x] Implement /benchmark/evaluate-nlp.ts — streams DAG, computes F1
+- [x] Implement /benchmark/evaluate-validation.ts — checks invalid DAG detection
+- [x] Implement /benchmark/evaluate-execution.ts — 100-run reliability test
+- [x] Implement /benchmark/compare-tokens.ts — Zerak vs raw API token log
+- [x] Set up human study: consent form, task set, SUS survey
+- [x] Add POST /api/benchmark/run endpoint with deterministic mode param
+
+### Phase 4 — Run experiments (3–5 days)
+- [x] Run all 100+ prompts 5× each (LLM non-determinism requires multiple runs)
+- [x] Log results to CSV: prompt_id, run, node_f1, edge_acc, var_acc, tokens, success
+- [x] Run validation module on all 30 invalid DAGs
+- [x] Simulate 3 failure types per workflow in execution module
+- [x] Conduct human study with 10–20 participants (min 5 per group)
+- [x] Store raw results in /benchmark/results/
+
+### Phase 5 — Analysis & writing
+- [x] Plot accuracy vs complexity (line chart, per tier)
+- [x] Plot token efficiency comparison (grouped bar: Zerak vs baseline)
+- [x] Plot failure distribution by node type (pie or bar)
+- [x] Compute mean ± std dev for all metrics (address non-determinism)
+- [x] Run ablation: full Zerak vs no-validator vs no-optimizer
+- [x] Write failure taxonomy (top 3 failure patterns with examples)
+- [x] Draft all 8 paper sections
+- [x] Submit to arXiv cs.AI or cs.HC

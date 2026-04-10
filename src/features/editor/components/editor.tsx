@@ -143,11 +143,29 @@ import {
   useMemo,
   useState,
 } from "react";
+import dynamic from "next/dynamic";
+
+const ReactFlow = dynamic(
+  () => import("@xyflow/react").then((mod) => mod.ReactFlow),
+  {
+    ssr: false,
+    loading: () => <LoadingView message="Loading flow editor..." />,
+  },
+);
+const Background = dynamic(
+  () => import("@xyflow/react").then((mod) => mod.Background),
+  { ssr: false },
+);
+const Controls = dynamic(
+  () => import("@xyflow/react").then((mod) => mod.Controls),
+  { ssr: false },
+);
+const Panel = dynamic(
+  () => import("@xyflow/react").then((mod) => mod.Panel),
+  { ssr: false },
+);
+
 import {
-  Background,
-  Controls,
-  Panel,
-  ReactFlow,
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,

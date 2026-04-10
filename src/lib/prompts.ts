@@ -94,6 +94,8 @@ CRITICAL:
 - Variable references in prompts: use nested paths (e.g. {{api.httpResponse.data}}, {{anthropicVar.aiResponse}}).
 - Node positions: (100,100), (260,100), (420,100), …
 - Only use property keys documented for each node type; no arbitrary extra keys on node objects outside id, name, type, data, position.
+- MAKE SURE YOU REFERENCE CORRECT VARIABLES BASED ON THE SCHEMA 
+
 
 Example of a question chunk:
 {"type":"question","content":"Which AI model would you like to use? (claude, gemini, openai)"}

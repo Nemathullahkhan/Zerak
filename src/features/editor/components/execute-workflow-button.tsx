@@ -24,9 +24,10 @@ export const ExecuteWorkflowButton = ({
   };
   return (
     <Button
-      size="lg"
+      size="sm"
       onClick={handleExecute}
       disabled={executeWorkflow.isPending}
+      className="h-9 px-4 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
     >
       <FlaskConicalIcon className="size-4" />
       Execute Workflow

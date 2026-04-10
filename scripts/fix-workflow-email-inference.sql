@@ -50,3 +50,4 @@ SELECT id, type, "data"->>'code' as code_snippet
 FROM "WorkflowNode"
 WHERE "id" = 'ie6c5k1bnoqz7uz9fottieje'
   AND "workflowId" = 'cmnck57950003jcjer5mbvwfs';
+tre

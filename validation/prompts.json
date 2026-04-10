@@ -1,0 +1,274 @@
+[
+  {
+    "id": "wf_001",
+    "prompt": "When a Google Form is submitted, append the response data to a Google Sheet",
+    "complexity": "easy",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
+    "expected_edges": [["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"]],
+    "expected_variables": ["formData"],
+    "integration_count": 2,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Simplest possible trigger-to-action workflow"
+  },
+  {
+    "id": "wf_002",
+    "prompt": "When a Google Form is submitted, save the response to a Google Sheet and send a Slack notification with the submitter's name",
+    "complexity": "easy",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS", "SLACK"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "SLACK"]
+    ],
+    "expected_variables": ["formData", "sheetResult"],
+    "integration_count": 3,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Linear 3-node chain. Tests basic variable passing."
+  },
+  {
+    "id": "wf_003",
+    "prompt": "Fetch the top 10 rows from a Google Sheet, summarise them using AI, then send the summary as an email",
+    "complexity": "easy",
+    "expected_nodes": ["MANUAL_TRIGGER", "GOOGLE_SHEETS", "ANTHROPIC", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["MANUAL_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["sheetRows", "summary"],
+    "integration_count": 3,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": true,
+    "notes": "Tests AI node in linear chain with variable handoff"
+  },
+  {
+    "id": "wf_004",
+    "prompt": "When a webhook fires, extract the payload data, transform it using a code snippet, and save the result to Google Sheets",
+    "complexity": "easy",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "CODE", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "CODE"],
+      ["CODE", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["webhookPayload", "transformedData"],
+    "integration_count": 2,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Tests CODE sandbox node in linear chain"
+  },
+  {
+    "id": "wf_005",
+    "prompt": "Every day at 9am, read the latest entries from Google Sheets and post a summary to a Discord channel",
+    "complexity": "easy",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "DISCORD"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "DISCORD"]
+    ],
+    "expected_variables": ["sheetData"],
+    "integration_count": 2,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Tests scheduled trigger node"
+  },
+  {
+    "id": "wf_020",
+    "prompt": "When a Stripe payment is received, if the payment amount is greater than $100 send a Slack alert to #sales, otherwise just log it to a Google Sheet",
+    "complexity": "medium",
+    "expected_nodes": ["STRIPE_TRIGGER", "IF", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["paymentData", "notifyResult"],
+    "integration_count": 3,
+    "has_branch": true,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Classic IF branch with two output paths. Tests branch routing."
+  },
+  {
+    "id": "wf_021",
+    "prompt": "When a Google Form is submitted, use AI to classify the response as positive or negative sentiment, then if positive send a thank-you Gmail, if negative create a Slack alert for the support team",
+    "complexity": "medium",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "ANTHROPIC", "IF", "GOOGLE_GMAIL", "SLACK"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "SLACK"]
+    ],
+    "expected_variables": ["formData", "sentimentResult", "emailResult"],
+    "integration_count": 4,
+    "has_branch": true,
+    "has_loop": false,
+    "has_ai": true,
+    "notes": "AI node feeding branch. Tests AI output as branch condition."
+  },
+  {
+    "id": "wf_022",
+    "prompt": "Fetch all rows from Google Sheets where status is pending, loop through each one, and for each row send a reminder Gmail to the email address in that row",
+    "complexity": "medium",
+    "expected_nodes": ["MANUAL_TRIGGER", "GOOGLE_SHEETS", "FILTER", "LOOP", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["MANUAL_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "FILTER"],
+      ["FILTER", "LOOP"],
+      ["LOOP", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["sheetRows", "filteredRows", "currentRow"],
+    "integration_count": 2,
+    "has_branch": false,
+    "has_loop": true,
+    "has_ai": false,
+    "notes": "Tests FILTER + LOOP combination with variable iteration"
+  },
+  {
+    "id": "wf_023",
+    "prompt": "When a webhook fires with a user ID, fetch their record from Google Sheets, use AI to generate a personalised message, then send it via Gmail and log the outcome to Slack",
+    "complexity": "medium",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS", "ANTHROPIC", "GOOGLE_GMAIL", "SLACK"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "SLACK"]
+    ],
+    "expected_variables": ["webhookPayload", "userRecord", "personalMessage", "emailResult"],
+    "integration_count": 4,
+    "has_branch": false,
+    "has_loop": false,
+    "has_ai": true,
+    "notes": "5-node linear chain with AI. Tests deep variable chaining."
+  },
+  {
+    "id": "wf_024",
+    "prompt": "Every Monday morning, check Google Sheets for overdue tasks, if there are any send a Slack summary to #team, if there are none send a celebration message to #general",
+    "complexity": "medium",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "IF", "SLACK", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "SLACK"]
+    ],
+    "expected_variables": ["overdueTasks"],
+    "integration_count": 2,
+    "has_branch": true,
+    "has_loop": false,
+    "has_ai": false,
+    "notes": "Two Slack nodes on different branches — tests duplicate node type handling"
+  },
+  {
+    "id": "wf_050",
+    "prompt": "When a Google Form is submitted, use AI to extract key entities from the response, classify the request type, if it's a support request fetch the customer record from Sheets and use AI to draft a reply then send via Gmail and log to Slack, if it's a sales enquiry send to a different Slack channel and create a Sheet entry",
+    "complexity": "hard",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "ANTHROPIC", "IF", "GOOGLE_SHEETS", "ANTHROPIC", "GOOGLE_GMAIL", "SLACK", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "SLACK"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["formData", "entities", "requestType", "customerRecord", "draftReply", "emailResult"],
+    "integration_count": 5,
+    "has_branch": true,
+    "has_loop": false,
+    "has_ai": true,
+    "notes": "Complex multi-branch with two AI nodes in separate paths"
+  },
+  {
+    "id": "wf_051",
+    "prompt": "Every night, fetch all new Google Drive files added today, for each file use AI to extract and summarise the content, classify it as urgent or routine, if urgent send a Slack DM to the team lead and add a Sheet entry with high priority flag, if routine just append to a running Sheet log",
+    "complexity": "hard",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_DRIVE", "LOOP", "ANTHROPIC", "IF", "SLACK", "GOOGLE_SHEETS", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "LOOP"],
+      ["LOOP", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["driveFiles", "currentFile", "summary", "classification"],
+    "integration_count": 4,
+    "has_branch": true,
+    "has_loop": true,
+    "has_ai": true,
+    "notes": "LOOP + IF + AI combination — highest complexity pattern"
+  },
+  {
+    "id": "wf_052",
+    "prompt": "When a Stripe payment event fires, fetch the customer details from Google Sheets using the customer ID from the payment, use a code block to compute their lifetime value, if lifetime value exceeds $1000 use AI to write a VIP thank-you email and send via Gmail and post to Slack #vip-customers, if below $1000 just send a standard confirmation Gmail",
+    "complexity": "hard",
+    "expected_nodes": ["STRIPE_TRIGGER", "GOOGLE_SHEETS", "CODE", "IF", "ANTHROPIC", "GOOGLE_GMAIL", "SLACK", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "IF"],
+      ["IF", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "SLACK"],
+      ["IF", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["paymentData", "customerRecord", "lifetimeValue", "vipEmail"],
+    "integration_count": 5,
+    "has_branch": true,
+    "has_loop": false,
+    "has_ai": true,
+    "notes": "CODE + IF + conditional AI node — tests numeric condition branching"
+  },
+  {
+    "id": "wf_053",
+    "prompt": "For each row in a Google Sheet, use AI to rewrite the content field in a formal tone, update the row in place with the rewritten content, and if the AI confidence is low flag it in a separate audit Sheet",
+    "complexity": "hard",
+    "expected_nodes": ["MANUAL_TRIGGER", "GOOGLE_SHEETS", "LOOP", "ANTHROPIC", "GOOGLE_SHEETS", "IF", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["MANUAL_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "LOOP"],
+      ["LOOP", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_SHEETS"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["allRows", "currentRow", "rewrittenContent", "confidenceScore"],
+    "integration_count": 2,
+    "has_branch": true,
+    "has_loop": true,
+    "has_ai": true,
+    "notes": "Loop with in-body branching off AI output — tests nested DAG structure"
+  },
+  {
+    "id": "wf_054",
+    "prompt": "When a webhook fires with an array of customer IDs, loop through each ID, fetch their profile from Google Sheets, use AI to score their churn risk from 0 to 10, if risk score is above 7 send a Slack alert to #retention and Gmail to their account manager, collect all scores and at the end append a summary row to a reporting Sheet",
+    "complexity": "hard",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "LOOP", "GOOGLE_SHEETS", "ANTHROPIC", "IF", "SLACK", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "LOOP"],
+      ["LOOP", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["LOOP", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["customerIds", "currentId", "profile", "churnScore", "allScores"],
+    "integration_count": 4,
+    "has_branch": true,
+    "has_loop": true,
+    "has_ai": true,
+    "notes": "Full pipeline: loop + AI scoring + conditional alerts + aggregate result — most complex pattern in dataset"
+  }
+]
