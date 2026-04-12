@@ -1,7 +1,7 @@
 [
   {
     "id": "wf_001",
-    "prompt": "When a new lead submits a Google Form, use Mistral AI with model 'mistral-large' to categorize their interest level from the form data. Send a tailored follow-up email via Gmail to 'lead@example.com' with subject 'Welcome', then append the lead details to Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Leads' with range 'A:D'.",
+    "prompt": "When a new lead submits a Google Form, create a GOOGLE_FORM_TRIGGER node with variableName 'formData'. Then create a MISTRAL node named 'CategorizeLead' with model 'mistral-large-latest' and this exact userPrompt: 'Analyze the formData and categorize the lead interest level as High, Medium or Low. Return only JSON with keys category and reason.'. Then create a GMAIL node named 'SendWelcomeEmail' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Welcome' and body 'Hi, your interest level is {{CategorizeLead.category}}. Reason: {{CategorizeLead.reason}}'. Finally create a GOOGLE_SHEETS node named 'AppendLead' with action 'append', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Leads', range 'A:D'. Connect them in this exact order: GOOGLE_FORM_TRIGGER → MISTRAL → GMAIL → GOOGLE_SHEETS.",
     "complexity": "medium",
     "expected_nodes": [
       "GOOGLE_FORM_TRIGGER",
@@ -10,23 +10,15 @@
       "GOOGLE_SHEETS"
     ],
     "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ],
-      [
-        "GMAIL",
-        "GOOGLE_SHEETS"
-      ]
+      ["GOOGLE_FORM_TRIGGER", "MISTRAL"],
+      ["MISTRAL", "GMAIL"],
+      ["GMAIL", "GOOGLE_SHEETS"]
     ],
     "expected_variables": [
       "formData",
-      "category",
-      "emailContent"
+      "CategorizeLead",
+      "SendWelcomeEmail",
+      "AppendLead"
     ],
     "integration_count": 4,
     "has_branch": false,
@@ -36,27 +28,14 @@
   },
   {
     "id": "wf_002",
-    "prompt": "Every morning, fetch the latest blog posts by making a GET HTTP request to endpoint 'https://api.rss2json.com/v1/api.json', summarize them using Mistral AI with model 'mistral-large'. Then send the summaries to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/abc'.",
+    "prompt": "Create an HTTP_REQUEST node named 'FetchRSS' with method 'GET' and endpoint 'https://api.rss2json.com/v1/api.json?rss_url=https://news.ycombinator.com/rss'. Then create a MISTRAL node named 'SummarizePosts' with model 'mistral-large-latest' and userPrompt 'Summarize the latest 5 blog posts from the rssFeed. Make each summary 2-3 sentences.'. Then create a DISCORD node named 'PostSummaries' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect them: HTTP_REQUEST → MISTRAL → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "DISCORD"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "DISCORD"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "DISCORD"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "DISCORD"]
     ],
-    "expected_variables": [
-      "rssFeed",
-      "summary"
-    ],
+    "expected_variables": ["FetchRSS", "SummarizePosts", "PostSummaries"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -65,32 +44,19 @@
   },
   {
     "id": "wf_003",
-    "prompt": "Read data from Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Topics' range 'A:B' using 'read' action. Loop through the rows sequentially, use Mistral AI with model 'mistral-large' to generate a detailed blog outline for each topic, then save each outline as a new document in Google Drive folderId '1DriveFolderXYZ'.",
+    "prompt": "Create a GOOGLE_SHEETS node named 'LoadTopics' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Topics', range 'A:B'. Then create a LOOP node named 'ProcessEachTopic' that iterates over {{LoadTopics.data}} using item variableName 'topicItem'. Inside the loop create a MISTRAL node named 'GenerateOutline' with model 'mistral-large-latest' and userPrompt 'Write a detailed blog outline for this topic: {{topicItem}}'. Then create a GOOGLE_DRIVE node named 'SaveOutline' with action 'create', folderId '1DriveFolderXYZ', and file name '{{topicItem}}_outline'. Connect: GOOGLE_SHEETS → LOOP → MISTRAL → GOOGLE_DRIVE.",
     "complexity": "hard",
-    "expected_nodes": [
-      "GOOGLE_SHEETS",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_DRIVE"
-    ],
+    "expected_nodes": ["GOOGLE_SHEETS", "LOOP", "MISTRAL", "GOOGLE_DRIVE"],
     "expected_edges": [
-      [
-        "GOOGLE_SHEETS",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_DRIVE"
-      ]
+      ["GOOGLE_SHEETS", "LOOP"],
+      ["LOOP", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_DRIVE"]
     ],
     "expected_variables": [
-      "topics",
-      "topicItem",
-      "outline"
+      "LoadTopics",
+      "ProcessEachTopic",
+      "GenerateOutline",
+      "SaveOutline"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -100,27 +66,14 @@
   },
   {
     "id": "wf_004",
-    "prompt": "When a webhook is received via HTTP POST request at endpoint 'https://api.example.com/webhook', use Mistral AI with model 'mistral-large' to generate relevant hashtags and trending keywords. Then append the post link and suggested tags to a Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Hashtags' range 'A:C'.",
+    "prompt": "When a webhook POST is received, create an HTTP_REQUEST node named 'ReceivePost' with method 'POST' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create a MISTRAL node named 'GenerateHashtags' with model 'mistral-large-latest' and userPrompt 'Generate 8 relevant hashtags and trending keywords for the post content.'. Then create a GOOGLE_SHEETS node named 'SaveHashtags' with action 'append', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Hashtags', range 'A:C'. Connect: HTTP_REQUEST → MISTRAL → GOOGLE_SHEETS.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "GOOGLE_SHEETS"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_SHEETS"]
     ],
-    "expected_variables": [
-      "postData",
-      "hashtags"
-    ],
+    "expected_variables": ["ReceivePost", "GenerateHashtags", "SaveHashtags"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -129,32 +82,15 @@
   },
   {
     "id": "wf_005",
-    "prompt": "Manually trigger a workflow that fetches pricing data by making a GET HTTP request to endpoint 'https://api.competitor.com/pricing'. Use Mistral AI with model 'mistral-large' to analyze market positioning, and send a summary report via Gmail to 'strategy@company.com' with the subject 'Competitor Analysis Report'.",
+    "prompt": "Manually trigger the workflow. Create an HTTP_REQUEST node named 'FetchPricing' with method 'GET' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create a MISTRAL node named 'MarketAnalysis' with model 'mistral-large-latest' and userPrompt 'Analyze the pricing data and write a short market positioning report.'. Then create a GMAIL node named 'SendAnalysis' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Competitor Analysis Report' and body '{{MarketAnalysis.aiResponse}}'. Connect: MANUAL_TRIGGER → HTTP_REQUEST → MISTRAL → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "GMAIL"
-    ],
+    "expected_nodes": ["MANUAL_TRIGGER", "HTTP_REQUEST", "MISTRAL", "GMAIL"],
     "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
+      ["MANUAL_TRIGGER", "HTTP_REQUEST"],
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "GMAIL"]
     ],
-    "expected_variables": [
-      "competitorData",
-      "analysis"
-    ],
+    "expected_variables": ["FetchPricing", "MarketAnalysis", "SendAnalysis"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -163,26 +99,17 @@
   },
   {
     "id": "wf_006",
-    "prompt": "When a high-priority server alert is received via HTTP POST request at endpoint 'https://api.alerts.com/webhook', use Mistral AI with model 'mistral-large' to analyze the error logs. Post the suggested immediate troubleshooting steps to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/devops'.",
+    "prompt": "When a high-priority server alert arrives via webhook, create an HTTP_REQUEST node named 'ReceiveAlert' with method 'POST' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create a MISTRAL node named 'AnalyzeError' with model 'mistral-large-latest' and userPrompt 'Analyze the error logs and suggest immediate troubleshooting steps.'. Then create a DISCORD node named 'PostTroubleshooting' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: HTTP_REQUEST → MISTRAL → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "DISCORD"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "DISCORD"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "DISCORD"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "DISCORD"]
     ],
     "expected_variables": [
-      "alertLogs",
-      "troubleshooting"
+      "ReceiveAlert",
+      "AnalyzeError",
+      "PostTroubleshooting"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -192,27 +119,14 @@
   },
   {
     "id": "wf_007",
-    "prompt": "Whenever a new issue is opened in GitHub via an HTTP GET reqeust to endpoint 'https://api.github.com/repos/org/repo/issues', use Mistral AI with model 'mistral-large' to automatically label it based on content. Send a notification with the proposed labels to Discord using webhookUrl 'https://discord.com/api/webhooks/123/github'.",
+    "prompt": "When a new GitHub issue is detected, create an HTTP_REQUEST node named 'FetchIssue' with method 'GET' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create a MISTRAL node named 'SuggestLabels' with model 'mistral-large-latest' and userPrompt 'Suggest appropriate labels for this GitHub issue based on its title and body.'. Then create a DISCORD node named 'NotifyTeam' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: HTTP_REQUEST → MISTRAL → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "DISCORD"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "DISCORD"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "DISCORD"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "DISCORD"]
     ],
-    "expected_variables": [
-      "githubIssue",
-      "labels"
-    ],
+    "expected_variables": ["FetchIssue", "SuggestLabels", "NotifyTeam"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -221,32 +135,15 @@
   },
   {
     "id": "wf_008",
-    "prompt": "Manually trigger a workflow that fetches daily cloud infrastructure costs via a GET HTTP request to endpoint 'https://api.cloud.com/costs'. Use an IF condition to check if the spending exceeds a threshold, and if so, send an alert email via Gmail to 'admin@company.com' with subject 'High Cloud Costs Alert'.",
+    "prompt": "Manually trigger the workflow. Create an HTTP_REQUEST node named 'FetchCosts' with method 'GET' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create an IF node named 'CheckHighCost' with condition '{{FetchCosts.total}} > 1000'. If true, create a GMAIL node named 'SendAlert' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'High Cloud Costs Alert' and body 'Current spending: {{FetchCosts.total}}'. Connect: MANUAL_TRIGGER → HTTP_REQUEST → IF → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "IF",
-      "GMAIL"
-    ],
+    "expected_nodes": ["MANUAL_TRIGGER", "HTTP_REQUEST", "IF", "GMAIL"],
     "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "IF"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
+      ["MANUAL_TRIGGER", "HTTP_REQUEST"],
+      ["HTTP_REQUEST", "IF"],
+      ["IF", "GMAIL"]
     ],
-    "expected_variables": [
-      "costs",
-      "isHighCost"
-    ],
+    "expected_variables": ["FetchCosts", "CheckHighCost", "SendAlert"],
     "integration_count": 3,
     "has_branch": true,
     "has_loop": false,
@@ -255,31 +152,19 @@
   },
   {
     "id": "wf_009",
-    "prompt": "When a Google Form is submitted for a new software access request, use an IF node to check the department. If IT, automatically trigger a POST HTTP request to endpoint 'https://api.internal.com/access' to grant access. Otherwise, forward the request via Gmail to 'support@company.com' with subject 'Access Request Needs Approval'.",
+    "prompt": "When a new software access request comes via Google Form, create a GOOGLE_FORM_TRIGGER node with variableName 'formData'. Then create an IF node named 'IsITDepartment' with condition '{{formData.department}} === \"IT\"'. If true, create an HTTP_REQUEST node named 'GrantAccess' with method 'POST' and endpoint 'https://jsonplaceholder.typicode.com/posts'. If false, create a GMAIL node named 'ForwardRequest' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Access Request Needs Approval'. Connect: GOOGLE_FORM_TRIGGER → IF → (HTTP_REQUEST and GMAIL).",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "IF",
-      "HTTP_REQUEST",
-      "GMAIL"
-    ],
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "IF", "HTTP_REQUEST", "GMAIL"],
     "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "IF"
-      ],
-      [
-        "IF",
-        "HTTP_REQUEST"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
+      ["GOOGLE_FORM_TRIGGER", "IF"],
+      ["IF", "HTTP_REQUEST"],
+      ["IF", "GMAIL"]
     ],
     "expected_variables": [
       "formData",
-      "isIT"
+      "IsITDepartment",
+      "GrantAccess",
+      "ForwardRequest"
     ],
     "integration_count": 4,
     "has_branch": true,
@@ -289,31 +174,19 @@
   },
   {
     "id": "wf_010",
-    "prompt": "When a new security log file is uploaded to Google Drive folderId '1DriveFolderXYZ', use Mistral AI with model 'mistral-large' to scan for anomalous behavior. Use an IF node to determine if threats are detected, and send a critical alert to Discord using webhookUrl 'https://discord.com/api/webhooks/123/security'.",
+    "prompt": "When a new security log is uploaded to Google Drive, create a GOOGLE_DRIVE node named 'GetLogFile' with action 'read', folderId '1DriveFolderXYZ'. Then create a MISTRAL node named 'ScanForThreats' with model 'mistral-large-latest' and userPrompt 'Scan the logContent for anomalous behavior and return isThreat true or false.'. Then create an IF node named 'ThreatDetected' with condition '{{ScanForThreats.isThreat}} === true'. If true, create a DISCORD node named 'SendAlert' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: GOOGLE_DRIVE → MISTRAL → IF → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "MISTRAL",
-      "IF",
-      "DISCORD"
-    ],
+    "expected_nodes": ["GOOGLE_DRIVE", "MISTRAL", "IF", "DISCORD"],
     "expected_edges": [
-      [
-        "GOOGLE_DRIVE",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "DISCORD"
-      ]
+      ["GOOGLE_DRIVE", "MISTRAL"],
+      ["MISTRAL", "IF"],
+      ["IF", "DISCORD"]
     ],
     "expected_variables": [
-      "logContent",
-      "isThreat"
+      "GetLogFile",
+      "ScanForThreats",
+      "ThreatDetected",
+      "SendAlert"
     ],
     "integration_count": 3,
     "has_branch": true,
@@ -323,27 +196,14 @@
   },
   {
     "id": "wf_011",
-    "prompt": "Read data from Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Leads' range 'A:D' using 'read' action. Use Mistral AI with model 'mistral-large' to research the company recent news and draft a personalized outreach email, then send it via Gmail to 'prospect@company.com' with subject 'Collaboration Opportunity'.",
+    "prompt": "Create a GOOGLE_SHEETS node named 'ReadLeads' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Leads', range 'A:D'. Then create a MISTRAL node named 'DraftOutreach' with model 'mistral-large-latest' and userPrompt 'Research the company and draft a personalized outreach email based on the leadRow.'. Then create a GMAIL node named 'SendOutreach' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Collaboration Opportunity'. Connect: GOOGLE_SHEETS → MISTRAL → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "GMAIL"
-    ],
+    "expected_nodes": ["GOOGLE_SHEETS", "MISTRAL", "GMAIL"],
     "expected_edges": [
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
+      ["GOOGLE_SHEETS", "MISTRAL"],
+      ["MISTRAL", "GMAIL"]
     ],
-    "expected_variables": [
-      "leadRow",
-      "outreachEmail"
-    ],
+    "expected_variables": ["ReadLeads", "DraftOutreach", "SendOutreach"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -352,26 +212,17 @@
   },
   {
     "id": "wf_012",
-    "prompt": "When an email is received from a potential lead via Gmail from 'contact@lead.com', use Mistral AI with model 'mistral-large' to perform sentiment analysis. Append the lead status in a Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Status' range 'A:C' using 'append' action.",
+    "prompt": "When an email is received from 'contact@lead.com' via Gmail, create a GMAIL node named 'ReadIncomingEmail' with variableName 'incomingEmail'. Then create a MISTRAL node named 'SentimentAnalysis' with model 'mistral-large-latest' and userPrompt 'Perform sentiment analysis on the incomingEmail and return positive, neutral or negative.'. Then create a GOOGLE_SHEETS node named 'UpdateStatus' with action 'append', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Status', range 'A:C'. Connect: GMAIL → MISTRAL → GOOGLE_SHEETS.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GMAIL",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
+    "expected_nodes": ["GMAIL", "MISTRAL", "GOOGLE_SHEETS"],
     "expected_edges": [
-      [
-        "GMAIL",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
+      ["GMAIL", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_SHEETS"]
     ],
     "expected_variables": [
-      "incomingEmail",
-      "sentiment"
+      "ReadIncomingEmail",
+      "SentimentAnalysis",
+      "UpdateStatus"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -381,32 +232,15 @@
   },
   {
     "id": "wf_013",
-    "prompt": "Manually trigger a workflow that reads a LinkedIn profile URL from a Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Profiles' range 'A:B' using 'read'. Use Mistral AI with model 'mistral-large' to draft a unique icebreaker message, and send it via Gmail to 'sales@company.com' with subject 'Icebreaker Draft'.",
+    "prompt": "Manually trigger. Create a GOOGLE_SHEETS node named 'ReadProfiles' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Profiles', range 'A:B'. Then create a MISTRAL node named 'DraftIcebreaker' with model 'mistral-large-latest' and userPrompt 'Draft a unique icebreaker message for the LinkedIn profile URL.'. Then create a GMAIL node named 'SendIcebreaker' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Icebreaker Draft'. Connect: MANUAL_TRIGGER → GOOGLE_SHEETS → MISTRAL → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "GMAIL"
-    ],
+    "expected_nodes": ["MANUAL_TRIGGER", "GOOGLE_SHEETS", "MISTRAL", "GMAIL"],
     "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
+      ["MANUAL_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "MISTRAL"],
+      ["MISTRAL", "GMAIL"]
     ],
-    "expected_variables": [
-      "linkedInUrl",
-      "icebreaker"
-    ],
+    "expected_variables": ["ReadProfiles", "DraftIcebreaker", "SendIcebreaker"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -415,31 +249,19 @@
   },
   {
     "id": "wf_014",
-    "prompt": "On a Google Form submission for a demo request, use Mistral AI with model 'mistral-large' to qualify the lead based on their responses. Use an IF node to check criteria, and if met, send a personalized scheduling link via Gmail to 'lead@company.com' with subject 'Schedule your demo'.",
+    "prompt": "On Google Form submission for demo request, create a GOOGLE_FORM_TRIGGER node with variableName 'formData'. Then create a MISTRAL node named 'QualifyLead' with model 'mistral-large-latest' and userPrompt 'Qualify the lead based on form responses and return isQualified true or false.'. Then create an IF node named 'IsQualified' with condition '{{QualifyLead.isQualified}} === true'. If true, create a GMAIL node named 'SendSchedulingLink' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Schedule your demo'. Connect: GOOGLE_FORM_TRIGGER → MISTRAL → IF → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "GMAIL"
-    ],
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "MISTRAL", "IF", "GMAIL"],
     "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
+      ["GOOGLE_FORM_TRIGGER", "MISTRAL"],
+      ["MISTRAL", "IF"],
+      ["IF", "GMAIL"]
     ],
     "expected_variables": [
       "formData",
-      "isQualified"
+      "QualifyLead",
+      "IsQualified",
+      "SendSchedulingLink"
     ],
     "integration_count": 3,
     "has_branch": true,
@@ -449,27 +271,14 @@
   },
   {
     "id": "wf_015",
-    "prompt": "Read sales performance data from a Google Sheet with spreadsheetId '1SalesSheet456' on sheetName 'WeeklyData' range 'A:F' using 'read'. Use Mistral AI with model 'mistral-large' to summarize the data, and post the key insights and trends to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/sales'.",
+    "prompt": "Create a GOOGLE_SHEETS node named 'ReadSalesData' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Sales', range 'A:C'. Then create a MISTRAL node named 'SummarizeSales' with model 'mistral-large-latest' and userPrompt 'Summarize the sales performance data and highlight key trends.'. Then create a DISCORD node named 'PostInsights' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: GOOGLE_SHEETS → MISTRAL → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "DISCORD"
-    ],
+    "expected_nodes": ["GOOGLE_SHEETS", "MISTRAL", "DISCORD"],
     "expected_edges": [
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "DISCORD"
-      ]
+      ["GOOGLE_SHEETS", "MISTRAL"],
+      ["MISTRAL", "DISCORD"]
     ],
-    "expected_variables": [
-      "salesData",
-      "insights"
-    ],
+    "expected_variables": ["ReadSalesData", "SummarizeSales", "PostInsights"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -478,26 +287,17 @@
   },
   {
     "id": "wf_016",
-    "prompt": "When a new invoice PDF is uploaded to Google Drive folderId '1InvoiceFolderXYZ', use Mistral AI with model 'mistral-large' to extract the invoice number, date, and total amount. Append this information to a master Google Sheet with spreadsheetId '1FinanceSheet789' on sheetName 'Invoices' range 'A:E' using 'append' action.",
+    "prompt": "When a new invoice PDF is uploaded to Google Drive, create a GOOGLE_DRIVE node named 'ReadInvoice' with action 'read', folderId '1InvoiceFolderXYZ'. Then create a MISTRAL node named 'ExtractInvoiceData' with model 'mistral-large-latest' and userPrompt 'Extract invoice number, date and total amount from the PDF content.'. Then create a GOOGLE_SHEETS node named 'AppendInvoice' with action 'append', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Docs', range 'A:C'. Connect: GOOGLE_DRIVE → MISTRAL → GOOGLE_SHEETS.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
+    "expected_nodes": ["GOOGLE_DRIVE", "MISTRAL", "GOOGLE_SHEETS"],
     "expected_edges": [
-      [
-        "GOOGLE_DRIVE",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
+      ["GOOGLE_DRIVE", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_SHEETS"]
     ],
     "expected_variables": [
-      "invoiceFile",
-      "extractedData"
+      "ReadInvoice",
+      "ExtractInvoiceData",
+      "AppendInvoice"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -507,27 +307,14 @@
   },
   {
     "id": "wf_017",
-    "prompt": "On a Google Form submission containing contract details, use Mistral AI with model 'mistral-large' to draft standard contract text. Create a new document with this text in Google Drive folderId '1ContractsFolderXYZ'.",
+    "prompt": "On Google Form submission with contract details, create a GOOGLE_FORM_TRIGGER node with variableName 'formData'. Then create a MISTRAL node named 'DraftContract' with model 'mistral-large-latest' and userPrompt 'Draft standard contract text based on the formData.'. Then create a GOOGLE_DRIVE node named 'CreateContractDoc' with action 'create', folderId '1ContractsFolderXYZ'. Connect: GOOGLE_FORM_TRIGGER → MISTRAL → GOOGLE_DRIVE.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "GOOGLE_DRIVE"
-    ],
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "MISTRAL", "GOOGLE_DRIVE"],
     "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_DRIVE"
-      ]
+      ["GOOGLE_FORM_TRIGGER", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_DRIVE"]
     ],
-    "expected_variables": [
-      "formData",
-      "contractText"
-    ],
+    "expected_variables": ["formData", "DraftContract", "CreateContractDoc"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -536,7 +323,7 @@
   },
   {
     "id": "wf_018",
-    "prompt": "Manually trigger a workflow that reads from Google Drive folderId '1FilesFolderXYZ'. Loop through the files sequentially, use Mistral AI with model 'mistral-large' to generate a file name from its content, and update the file in Google Drive.",
+    "prompt": "Manually trigger. Create a GOOGLE_DRIVE node named 'ListFiles' with action 'list', folderId '1FilesFolderXYZ'. Then create a LOOP node named 'RenameFiles' that iterates over {{ListFiles.files}} with item variableName 'fileItem'. Inside the loop create a MISTRAL node named 'GenerateFileName' with model 'mistral-large-latest' and userPrompt 'Generate a clean file name from the fileItem content.'. Then create a GOOGLE_DRIVE node named 'UpdateFile' with action 'update'. Connect: MANUAL_TRIGGER → GOOGLE_DRIVE → LOOP → MISTRAL → GOOGLE_DRIVE.",
     "complexity": "hard",
     "expected_nodes": [
       "MANUAL_TRIGGER",
@@ -546,45 +333,16 @@
       "GOOGLE_DRIVE"
     ],
     "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_DRIVE"
-      ]
-    ],
-    "expected_connection_indices": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        2
-      ],
-      [
-        2,
-        3
-      ],
-      [
-        3,
-        4
-      ]
+      ["MANUAL_TRIGGER", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "LOOP"],
+      ["LOOP", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_DRIVE"]
     ],
     "expected_variables": [
-      "fileList",
-      "fileItem",
-      "newName"
+      "ListFiles",
+      "RenameFiles",
+      "GenerateFileName",
+      "UpdateFile"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -594,26 +352,17 @@
   },
   {
     "id": "wf_019",
-    "prompt": "When a POST HTTP request is received at endpoint 'https://api.signatures.com/webhook', download the signed PDF from Google Drive folderId '1SignedDocsXYZ', and send a confirmation email via Gmail to 'client@company.com' with subject 'Your signed document'.",
+    "prompt": "When a POST webhook is received at 'https://jsonplaceholder.typicode.com/posts', create an HTTP_REQUEST node named 'SignatureEvent'. Then create a GOOGLE_DRIVE node named 'DownloadSignedPDF' with action 'read', folderId '1SignedDocsXYZ'. Then create a GMAIL node named 'SendConfirmation' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Your signed document'. Connect: HTTP_REQUEST → GOOGLE_DRIVE → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_DRIVE",
-      "GMAIL"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "GOOGLE_DRIVE", "GMAIL"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "GMAIL"
-      ]
+      ["HTTP_REQUEST", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "GMAIL"]
     ],
     "expected_variables": [
-      "signatureEvent",
-      "signedFile"
+      "SignatureEvent",
+      "DownloadSignedPDF",
+      "SendConfirmation"
     ],
     "integration_count": 3,
     "has_branch": false,
@@ -623,27 +372,14 @@
   },
   {
     "id": "wf_020",
-    "prompt": "Read data from a Google Sheet with spreadsheetId '1DocsSheet123' on sheetName 'Metadata' range 'A:D' using 'read'. Use Mistral AI with model 'mistral-large' to generate a 2-sentence summary, and save it as a text file in Google Drive folderId '1SummaryFolderXYZ'.",
+    "prompt": "Create a GOOGLE_SHEETS node named 'ReadMetadata' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Docs', range 'A:B'. Then create a MISTRAL node named 'GenerateSummary' with model 'mistral-large-latest' and userPrompt 'Generate a 2-sentence summary from the metadataRow.'. Then create a GOOGLE_DRIVE node named 'SaveSummary' with action 'create', folderId '1SummaryFolderXYZ'. Connect: GOOGLE_SHEETS → MISTRAL → GOOGLE_DRIVE.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "GOOGLE_DRIVE"
-    ],
+    "expected_nodes": ["GOOGLE_SHEETS", "MISTRAL", "GOOGLE_DRIVE"],
     "expected_edges": [
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_DRIVE"
-      ]
+      ["GOOGLE_SHEETS", "MISTRAL"],
+      ["MISTRAL", "GOOGLE_DRIVE"]
     ],
-    "expected_variables": [
-      "metadataRow",
-      "summary"
-    ],
+    "expected_variables": ["ReadMetadata", "GenerateSummary", "SaveSummary"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -652,27 +388,14 @@
   },
   {
     "id": "wf_021",
-    "prompt": "When a POST HTTP request is received at endpoint 'https://api.support.com/webhook', use Mistral AI with model 'mistral-large' to suggest the most likely solution. Draft a reply email in Gmail to 'agent@company.com' with subject 'Ticket Suggested Reply'.",
+    "prompt": "When a support ticket webhook arrives at 'https://jsonplaceholder.typicode.com/posts', create an HTTP_REQUEST node named 'GetTicket'. Then create a MISTRAL node named 'SuggestSolution' with model 'mistral-large-latest' and userPrompt 'Suggest the most likely solution for this ticket.'. Then create a GMAIL node named 'SendReply' that sends to 'muhammednemathullahkhan@gmail.com' with subject 'Ticket Suggested Reply'. Connect: HTTP_REQUEST → MISTRAL → GMAIL.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "GMAIL"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "GMAIL"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "GMAIL"]
     ],
-    "expected_variables": [
-      "ticketData",
-      "suggestion"
-    ],
+    "expected_variables": ["GetTicket", "SuggestSolution", "SendReply"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -681,27 +404,14 @@
   },
   {
     "id": "wf_022",
-    "prompt": "On a Google Form submission for a bug report, use Mistral AI with model 'mistral-large' to extract clear reproduction steps. Create a new issue via a POST HTTP request to endpoint 'https://api.github.com/repos/org/repo/issues' with the necessary headers and body.",
+    "prompt": "On Google Form bug report submission, create a GOOGLE_FORM_TRIGGER node with variableName 'bugReport'. Then create a MISTRAL node named 'ExtractSteps' with model 'mistral-large-latest' and userPrompt 'Extract clear reproduction steps from the bugReport.'. Then create an HTTP_REQUEST node named 'CreateGitHubIssue' with method 'POST' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Connect: GOOGLE_FORM_TRIGGER → MISTRAL → HTTP_REQUEST.",
     "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "HTTP_REQUEST"
-    ],
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "MISTRAL", "HTTP_REQUEST"],
     "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "HTTP_REQUEST"
-      ]
+      ["GOOGLE_FORM_TRIGGER", "MISTRAL"],
+      ["MISTRAL", "HTTP_REQUEST"]
     ],
-    "expected_variables": [
-      "bugReport",
-      "reproSteps"
-    ],
+    "expected_variables": ["bugReport", "ExtractSteps", "CreateGitHubIssue"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
@@ -710,31 +420,19 @@
   },
   {
     "id": "wf_023",
-    "prompt": "Fetch the latest tweets via a GET HTTP request to endpoint 'https://api.twitter.com/2/tweets/search/recent'. Use Mistral AI with model 'mistral-large' to detect sentiment. Use an IF node to check for negative feedback, and send it to Discord using webhookUrl 'https://discord.com/api/webhooks/123/support'.",
+    "prompt": "Create an HTTP_REQUEST node named 'FetchTweets' with method 'GET' and endpoint 'https://jsonplaceholder.typicode.com/posts'. Then create a MISTRAL node named 'DetectSentiment' with model 'mistral-large-latest' and userPrompt 'Detect if any tweets contain negative feedback and return isNegative true or false.'. Then create an IF node named 'NegativeFeedback' with condition '{{DetectSentiment.isNegative}} === true'. If true, create a DISCORD node named 'PostToSupport' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: HTTP_REQUEST → MISTRAL → IF → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "MISTRAL",
-      "IF",
-      "DISCORD"
-    ],
+    "expected_nodes": ["HTTP_REQUEST", "MISTRAL", "IF", "DISCORD"],
     "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "DISCORD"
-      ]
+      ["HTTP_REQUEST", "MISTRAL"],
+      ["MISTRAL", "IF"],
+      ["IF", "DISCORD"]
     ],
     "expected_variables": [
-      "tweets",
-      "isNegative"
+      "FetchTweets",
+      "DetectSentiment",
+      "NegativeFeedback",
+      "PostToSupport"
     ],
     "integration_count": 3,
     "has_branch": true,
@@ -744,55 +442,16 @@
   },
   {
     "id": "wf_024",
-    "prompt": "When a customer inquiry is received via Gmail from 'customer@email.com', use Mistral AI with model 'mistral-large' to classify it. Use a SWITCH node to route it: if Technical, send to Discord webhookUrl 'https://discord.com/api/webhooks/123/tech'; otherwise reply via Gmail to 'support@company.com' with subject 'Inquiry routed'.",
+    "prompt": "When a customer inquiry arrives via Gmail from 'customer@email.com', create a GMAIL node named 'ReadInquiry'. Then create a MISTRAL node named 'ClassifyInquiry' with model 'mistral-large-latest' and userPrompt 'Classify the inquiry as Technical or General.'. Then create a SWITCH node named 'RouteInquiry' that routes: if classification === 'Technical' send to DISCORD webhook 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath', else reply via GMAIL to 'muhammednemathullahkhan@gmail.com' with subject 'Inquiry routed'. Connect: GMAIL → MISTRAL → SWITCH → (DISCORD and GMAIL).",
     "complexity": "hard",
-    "expected_nodes": [
-      "GMAIL",
-      "MISTRAL",
-      "SWITCH",
-      "DISCORD",
-      "GMAIL"
-    ],
+    "expected_nodes": ["GMAIL", "MISTRAL", "SWITCH", "DISCORD", "GMAIL"],
     "expected_edges": [
-      [
-        "GMAIL",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "SWITCH"
-      ],
-      [
-        "SWITCH",
-        "DISCORD"
-      ],
-      [
-        "SWITCH",
-        "GMAIL"
-      ]
+      ["GMAIL", "MISTRAL"],
+      ["MISTRAL", "SWITCH"],
+      ["SWITCH", "DISCORD"],
+      ["SWITCH", "GMAIL"]
     ],
-    "expected_connection_indices": [
-      [
-        0,
-        1
-      ],
-      [
-        1,
-        2
-      ],
-      [
-        2,
-        3
-      ],
-      [
-        2,
-        4
-      ]
-    ],
-    "expected_variables": [
-      "customerInquiry",
-      "classification"
-    ],
+    "expected_variables": ["ReadInquiry", "ClassifyInquiry", "RouteInquiry"],
     "integration_count": 4,
     "has_branch": true,
     "has_loop": false,
@@ -801,32 +460,15 @@
   },
   {
     "id": "wf_025",
-    "prompt": "Manually trigger a workflow to read unresolved support tickets from Google Sheet with spreadsheetId '1SupportSheet123' on sheetName 'Tickets' range 'A:E' using 'read'. Use Mistral AI with model 'mistral-large' to prioritize them, and post a summary to Discord using webhookUrl 'https://discord.com/api/webhooks/123/triage'.",
+    "prompt": "Manually trigger. Create a GOOGLE_SHEETS node named 'ReadTickets' with action 'read', spreadsheetId '1d5g9yPszvzE8BgcxAX_okP1DX7dzjCH-Y60JYUj0nBc', sheetName 'Support', range 'A:C'. Then create a MISTRAL node named 'PrioritizeTickets' with model 'mistral-large-latest' and userPrompt 'Prioritize the unresolved support tickets and create a summary.'. Then create a DISCORD node named 'PostTriage' with webhookUrl 'https://discord.com/api/webhooks/1479429896710131916/8L2Ol_L0-KBkfjPH5SozFOqNHdC5FTiE1cdshf03ZNWIDFPdT3WrogMhDgivFARVuHVR' and username 'khan_nemath'. Connect: MANUAL_TRIGGER → GOOGLE_SHEETS → MISTRAL → DISCORD.",
     "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "DISCORD"
-    ],
+    "expected_nodes": ["MANUAL_TRIGGER", "GOOGLE_SHEETS", "MISTRAL", "DISCORD"],
     "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "DISCORD"
-      ]
+      ["MANUAL_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "MISTRAL"],
+      ["MISTRAL", "DISCORD"]
     ],
-    "expected_variables": [
-      "tickets",
-      "prioritySummary"
-    ],
+    "expected_variables": ["ReadTickets", "PrioritizeTickets", "PostTriage"],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,

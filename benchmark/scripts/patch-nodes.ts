@@ -1,7 +1,7 @@
 ///patch-nodes.ts
 export function patchNodesForBenchmark(nodes: any[], promptId?: string) {
   const mistralCredId = process.env.BENCHMARK_MISTRAL_CREDENTIAL_ID;
-  const discordWebhook = process.env.BENCHMARK_DISCORD_WEBHOOK_URL;
+  const discordWebhook = process.env.BENCHMARK_DISCORD_WEBHOOK_URL || process.env.BENCHMARK_DISCORD_CREDENTIAL_ID;
   const spreadsheetId = process.env.BENCHMARK_SPREADSHEET_ID;
   const defaultSheet = process.env.BENCHMARK_SHEET_NAME || "BenchmarkData";
   const driveFileId = process.env.BENCHMARK_DRIVE_FILE_ID;

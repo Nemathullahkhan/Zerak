@@ -69,30 +69,30 @@ CRITICAL RULES:
 VARIABLE REFERENCING — CRITICAL:
 When referencing output from a previous node, you MUST use the correct nested path, not just the variable name.
 Each node's output is stored as an object with specific fields. Always reference the exact field needed.
+IMPORTANT: If you are injecting an entire object or array into a text prompt (e.g., passing a list of posts to an AI node), you MUST use the json helper to correctly format it as text. Example: {{json variableName.httpResponse.data}}. Failing to do this will result in [object Object].
 
 Output shapes per node type:
 - MANUAL_TRIGGER: No output.
-- CONTENT_SOURCE (YouTube transcriber): variableName → output is { transcript: string }. Reference as {{variableName.transcript}}
-- HTTP_REQUEST: variableName → output is { httpResponse: { data: string, status: number, statusText: string } }. Reference as {{variableName.httpResponse.data}} (for the response body).
-- ANTHROPIC, GEMINI, OPENAI: variableName → output is { aiResponse: string, text: string }. Reference as {{variableName.aiResponse}} (preferred).
-- SLACK: variableName → output is { success: boolean, message?: string }. For the content sent, reference {{variableName.message}}.
+- CONTENT_SOURCE: variableName → output is { transcript: string }. Reference as {{variableName.transcript}}
+- HTTP_REQUEST: variableName → output is { httpResponse: { data: any, status: number, statusText: string } }. Reference as {{variableName.httpResponse.data}} (for the response body). Use {{json variableName.httpResponse.data}} if it returns JSON/arrays.
+- ANTHROPIC, GEMINI, OPENAI, MISTRAL: variableName → output is { aiResponse: string, text: string }. Reference as {{variableName.aiResponse}} (preferred).
+- SLACK: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
 - DISCORD: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
-- GMAIL: variableName → output is { sent: boolean, messageId: string, threadId: string, to: string, subject: string }. Reference specific fields like {{variableName.messageId}} or {{variableName.sent}}.
-- GOOGLE_SHEETS: variableName → output is { rows: any[][] }. Reference first row first col as {{variableName.rows.0.0}}.
-- LOOP: variableName → output is an array of results from the loop body. During loop, use {{itemVariable.field}} to reference current item.
-- CODE: variableName → output is whatever the code returns. Reference as {{variableName}}.
+- GMAIL: variableName → output is { sent: boolean, messageId: string, threadId: string, to: string, subject: string }. Reference specific fields like {{variableName.sent}}.
+- GOOGLE_SHEETS: variableName → output is { rows: any[][] }. Reference first row first col as {{variableName.rows.0.0}}. Use {{json variableName.rows}} to pass all rows.
+- LOOP: variableName → output is an array of results from the loop body. During loop, use {{itemVariable.field}} to reference current item. Use {{json itemVariable}} if the item is an object.
+- CODE: variableName → output is whatever the code returns. Reference as {{variableName}}. Use {{json variableName}} if the code returns an object.
 
 Examples of correct references:
 - After CONTENT_SOURCE with variableName "youtubeTranscript": next node's prompt: "Summarize: {{youtubeTranscript.transcript}}"
-- After HTTP_REQUEST with variableName "apiResponse": next node's prompt: "Data: {{apiResponse.httpResponse.data}}"
-- After ANTHROPIC with variableName "summary": next node's content: "{{summary.aiResponse}}"
-- After GMAIL with variableName "emailResult": next node's content: "Sent email ID: {{emailResult.messageId}}"
+- After HTTP_REQUEST with variableName "apiResponse": next node's prompt: "Data: {{json apiResponse.httpResponse.data}}"
+- After MISTRAL with variableName "summary": next node's content: "{{summary.aiResponse}}"
 
 WRONG examples (never do these):
 - {{youtubeTranscript}}          ← references entire object, not the transcript
 - {{apiResponse}}                ← references entire object, not the data
+- {{apiResponse.httpResponse.data}} ← results in [object Object] if data is an array/object. Must use {{json ...}}
 - {{summary}}                    ← references entire object, not the AI text
-- {{emailResult}}                ← references entire object, not a specific field
 
 Available node types and their EXACT data shapes (all fields required, no extras):
 

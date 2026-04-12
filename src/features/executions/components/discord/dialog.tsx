@@ -180,7 +180,7 @@ export const DiscordDialog = ({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>BOT Username (optional)</FormLabel>
+                  <FormLabel>BOT Username </FormLabel>
                   <FormControl>
                     <Input placeholder="Workflow Bot" {...field} />
                   </FormControl>

@@ -1,11 +1,59 @@
 prompt_id,workflow_id,execution_id,success,latency_ms,error,timestamp
-wf_001,cmnvt44mu003h2sjezqdvmrok,01KP0YJK2FCRJX4CAEDJXWNCF6,false,14530,Mistral node: User Prompt is missing!,2026-04-12T13:37:37.406Z
-wf_002,cmnvt476y003i2sjewxj55bkn,01KP0YK2619CPA6P33VMBHZWGV,false,14609,HTTP Request node: No endpoint configured,2026-04-12T13:37:53.033Z
-wf_003,cmnvt49qg003j2sje8xenauul,01KP0YKHE2F3AXKQSA6GCFC63Z,false,12092,Google Sheets: Missing required fields (action or variableName),2026-04-12T13:38:06.131Z
-wf_004,cmnvt4cbm003k2sje1tsm8qjl,01KP0YKY81MSE59F09VA83X3C7,false,14620,HTTP Request node: No endpoint configured,2026-04-12T13:38:21.763Z
-wf_005,cmnvt4esm003l2sjeoct1vrjl,01KP0YMDHFE3PBS0VZMTKB8R9R,false,14754,HTTP Request node: No endpoint configured,2026-04-12T13:38:37.531Z
-wf_006,cmnvt4hbx003m2sje3obtlzg6,01KP0YMWWTRBDE78KGRJNH0WX2,false,11972,HTTP Request node: No endpoint configured,2026-04-12T13:38:50.516Z
-wf_007,cmnvt4k1d003n2sje4qs1c0jl,01KP0YN9JBC1B26K4RHXW9SXTK,false,15177,HTTP Request node: No endpoint configured,2026-04-12T13:39:06.699Z
-wf_008,cmnvt4mjp003o2sje7g7gmbfm,01KP0YNSCB4HQJTN3K2RNB8DP6,false,14624,HTTP Request node: No endpoint configured,2026-04-12T13:39:22.335Z
-wf_009,cmnvt4p18003p2sjegk4rr2tk,01KP0YP8NBD4Q0JFVKD40V663T,false,13370,IF node: condition is required,2026-04-12T13:39:36.712Z
-wf_010,cmnvt4rj9003q2sje2w1hroag,01KP0YPPPDVBB209BNK8XC75YX,false,11901,Google Drive node: Action is required.,2026-04-12T13:39:49.619Z
+wf_001,cmnwa35ex000p34jex0pbpj1u,01KP1T9K9XW2XYD90RX7Q37GX6,false,25308,"append requires spreadsheetId, sheetName, and data",2026-04-12T21:42:13.665Z
+wf_002,cmnwa3rw3000q34jeut2sksbo,01KP1TAD6JJR53T8ZB4G06GDAQ,false,26617,Discord node: Username is missing!,2026-04-12T21:42:41.291Z
+wf_003,cmnwa4izl000r34jeac6boma5,01KP1TB7Y99J8SEYX2NGD92RSY,false,15215,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T21:42:57.522Z
+wf_004,cmnwa547n000s34jejh5zamcm,01KP1TBQSGCN7GX8NP9KSX4K9V,false,14800,Unexpected end of JSON input,2026-04-12T21:43:13.337Z
+wf_005,cmnwa5lbd000t34jekf0sugvz,01KP1TC77PYSEK6MHBMSJDC3Q9,true,51012,None,2026-04-12T21:44:05.359Z
+wf_006,cmnwa66ta000u34jevu16u5p4,01KP1TDT20FHWN6890ZBRY6S2Q,false,12390,Unexpected end of JSON input,2026-04-12T21:44:18.750Z
+wf_007,cmnwa6t2q000v34je4bik9tqe,01KP1TE735XYZS4NWTWRS2GXZA,false,29616,Discord node: Username is missing!,2026-04-12T21:44:49.368Z
+wf_008,cmnwa723n000w34jeqo3fwkye,01KP1TF51P0C0DNKD83XVMPVHE,true,12837,None,2026-04-12T21:45:03.217Z
+wf_009,cmnwa7mj4000x34jezq32el54,01KP1TFJJ27QRXQZ9XZMYR5S34,false,14588,Unexpected end of JSON input,2026-04-12T21:45:18.818Z
+wf_010,cmnwa8pr8000y34je6jbc9z3g,01KP1TG1TDSH8S5DWRN7WBBVXV,false,14822,"Google Drive: File not found or not accessible. Check:
+1. File ID is correct
+2. File is shared with your Google account
+3. File hasn't been moved or deleted
+
+Provided file ID: '1DriveFolderXYZ' in parents and mimeType != 'application/vnd.google-apps.folder'",2026-04-12T21:45:34.652Z
+wf_012,cmnwa9hc4000z34jec18njj8t,01KP1TGH7VHJAE2ET2MY3JTKYB,false,14628,Gmail node: Subject is required.,2026-04-12T21:45:50.284Z
+wf_013,cmnwa9zp0001034jeh0vbg0sn,01KP1TH0H8Z1CFFR1XMMMEGRKG,false,14969,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T21:46:06.260Z
+wf_014,cmnwaakkw001134jeapileblw,01KP1THG320RQYM545RB598341,true,26124,None,2026-04-12T21:46:33.395Z
+wf_015,cmnwab7cp001234je5g1zr2rt,01KP1TJAMSMCN862JPY76FPG83,false,14558,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T21:46:48.955Z
+wf_016,cmnwac0dp001334jeuh4i6d3y,01KP1TJSS634N6ZTAF5PKTDKTZ,true,6703,None,2026-04-12T21:46:56.663Z
+wf_017,cmnwac9ni001434je3h0b5s2k,01KP1TK1CMV0C9DK7BYS7NG5E8,true,39354,None,2026-04-12T21:47:37.032Z
+wf_018,cmnwacw1d001534jem15vw09s,01KP1TM8S7V4ZVGE3NAPZER582,false,14700,"Google Drive: File not found or not accessible. Check:
+1. File ID is correct
+2. File is shared with your Google account
+3. File hasn't been moved or deleted
+
+Provided file ID: '1FilesFolderXYZ' in parents",2026-04-12T21:47:52.741Z
+wf_019,cmnwadgz7001634jedbig9fye,01KP1TMR311JXMZ72W1XXPZ8HV,false,15292,Unexpected end of JSON input,2026-04-12T21:48:09.039Z
+wf_020,cmnwado9y001734jeu4etjx1l,01KP1TN80DHZP2RAVZ2QGEDD6G,true,7474,None,2026-04-12T21:48:17.526Z
+wf_021,cmnwae85r001834jezqxk7tgu,01KP1TNG8Q9Y5SW1K21T0AB553,true,51372,None,2026-04-12T21:49:09.899Z
+wf_022,cmnwaepp0001934jetjcrtsre,01KP1TQ3F5155B8383ZT7KMES3,false,20574,Bad control character in string literal in JSON at position 213 (line 1 column 214),2026-04-12T21:49:31.486Z
+wf_023,cmnwafgjj001a34jeykmi7qit,01KP1TQRHW3JHK2Y34J94AB240,false,32172,Discord node: Username is missing!,2026-04-12T21:50:04.668Z
+wf_024,cmnwag7cj001b34jemuyk3zvz,01KP1TRRXWGTC0WA1A86YC25NW,false,11790,Gmail node: Subject is required.,2026-04-12T21:50:17.462Z
+wf_025,cmnwagt6a001c34je66yddy6t,01KP1TS5DY8BQGJ01GCCS32V0E,false,15470,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T21:50:33.938Z

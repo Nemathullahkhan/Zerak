@@ -94,7 +94,7 @@ async function main() {
     .filter((parts) => parts[1] === "true") // success is true
     .map((parts) => ({ prompt_id: parts[0], workflow_id: parts[2] }));
 
-  for (const { prompt_id, workflow_id } of workflowsToTest.slice(0, 10)) {
+  for (const { prompt_id, workflow_id } of workflowsToTest) {
     process.stdout.write(
       `Testing execution for ${prompt_id} (${workflow_id})... `,
     );

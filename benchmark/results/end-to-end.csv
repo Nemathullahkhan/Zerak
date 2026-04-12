@@ -1,26 +1,67 @@
 prompt_id,workflow_id,execution_id,creation_success,execution_success,output_correct,total_latency_ms,error,timestamp
-wf_001,,,false,false,false,7703,Generation produced no nodes,2026-04-12T13:40:03.394Z
-wf_002,,,false,false,false,25044,Generation produced no nodes,2026-04-12T13:40:29.446Z
-wf_003,,,false,false,false,12655,Generation produced no nodes,2026-04-12T13:40:43.102Z
-wf_004,,,false,false,false,9850,Generation produced no nodes,2026-04-12T13:40:53.963Z
-wf_005,,,false,false,false,23722,Generation produced no nodes,2026-04-12T13:41:18.696Z
-wf_006,,,false,false,false,8115,Generation produced no nodes,2026-04-12T13:41:27.813Z
-wf_007,,,false,false,false,10323,Generation produced no nodes,2026-04-12T13:41:39.147Z
-wf_008,,,false,false,false,7329,Generation produced no nodes,2026-04-12T13:41:47.477Z
-wf_009,,,false,false,false,7506,Generation produced no nodes,2026-04-12T13:41:55.991Z
-wf_010,,,false,false,false,8374,Generation produced no nodes,2026-04-12T13:42:05.374Z
-wf_011,,,false,false,false,8157,Generation produced no nodes,2026-04-12T13:42:14.541Z
-wf_012,,,false,false,false,7655,Generation produced no nodes,2026-04-12T13:42:23.205Z
-wf_013,,,false,false,false,8047,Generation produced no nodes,2026-04-12T13:42:32.253Z
-wf_014,,,false,false,false,4716,Generation produced no nodes,2026-04-12T13:42:37.972Z
-wf_015,,,false,false,false,23925,Generation produced no nodes,2026-04-12T13:43:02.912Z
-wf_016,,,false,false,false,5329,Generation produced no nodes,2026-04-12T13:43:09.257Z
-wf_017,,,false,false,false,7600,Generation produced no nodes,2026-04-12T13:43:17.872Z
-wf_018,,,false,false,false,26605,Generation produced no nodes,2026-04-12T13:43:45.492Z
-wf_019,,,false,false,false,11242,Generation produced no nodes,2026-04-12T13:43:57.748Z
-wf_020,,,false,false,false,6827,Generation produced no nodes,2026-04-12T13:44:05.590Z
-wf_021,,,false,false,false,8706,Generation produced no nodes,2026-04-12T13:44:15.305Z
-wf_022,,,false,false,false,26684,Generation produced no nodes,2026-04-12T13:44:42.998Z
-wf_023,,,false,false,false,8401,Generation produced no nodes,2026-04-12T13:44:52.409Z
-wf_024,,,false,false,false,34319,Generation produced no nodes,2026-04-12T13:45:27.733Z
-wf_025,,,false,false,false,7491,Generation produced no nodes,2026-04-12T13:45:36.236Z
+wf_001,cmnwasxnw002134je6tivzjxa,01KP1TTPKSGDQ6H2YMHV3REP8P,true,false,true,55096,"append requires spreadsheetId, sheetName, and data",2026-04-12T21:51:34.618Z
+wf_002,cmnwau1ff002334je44djfmy8,01KP1TW8XQVPMX89A3KXAQ3RXN,true,false,true,51573,Discord node: Username is missing!,2026-04-12T21:52:27.205Z
+wf_003,cmnwavdvj002534jeuvvkk1pv,01KP1TY6BD4N4XFVRYXPKB789E,true,false,true,50133,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T21:53:18.353Z
+wf_004,cmnwawatu002734jejnv4s0yc,01KP1TZG1AGMPYYTQ4N26ZF7SM,true,false,true,41976,Unexpected end of JSON input,2026-04-12T21:54:01.344Z
+wf_005,cmnwax6h0002934je1rz86h2h,01KP1V0R34TQF27F9E1EEPGT0W,true,true,true,73601,None,2026-04-12T21:55:15.959Z
+wf_006,cmnwaytr0002b34jef0y0yczq,01KP1V334E7SB65QKQ6XC5W0WZ,true,false,true,41260,Unexpected end of JSON input,2026-04-12T21:55:58.231Z
+wf_007,cmnwaztkq002d34je5zo7ez0v,01KP1V4GFRQ92ZZ9CS387GPARV,true,false,true,62731,Discord node: Username is missing!,2026-04-12T21:57:01.964Z
+wf_008,cmnwb13s9002f34je2k2h2m81,01KP1V6AXW63W7JPDBJWPT7V14,true,true,true,51495,None,2026-04-12T21:57:54.472Z
+wf_009,cmnwb24hv002h34jecklx6bum,01KP1V7SCA48YRWC1H59PYDK08,true,false,true,39308,Unexpected end of JSON input,2026-04-12T21:58:34.791Z
+wf_010,cmnwb3nxi002j34jecrdermtx,01KP1V9ZHR2EY4DFXZ0BGSW4MJ,true,false,true,69758,Request failed with status code 403 Forbidden: GET https://www.googleapis.com/drive/v3/files,2026-04-12T21:59:45.554Z
+wf_011,cmnwb4fmb002l34je5da462ss,01KP1VB2N9AQ60EE7334HNM0ZV,true,false,true,33746,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T22:00:20.310Z
+wf_012,cmnwb5g0q002n34jeahfr2ql4,01KP1VCGSJN5ZKK5D0TJF8DJ4F,true,false,true,43337,Gmail node: Subject is required.,2026-04-12T22:01:04.655Z
+wf_013,cmnwb5z6r002p34je3s1aolfa,01KP1VD8Y6XB68SSC5VV4CE0Z6,true,false,true,26478,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T22:01:32.136Z
+wf_014,cmnwb6u8j002r34jeb3eerihv,01KP1VEGF80RG46MRS7N94P2BT,true,true,true,49096,None,2026-04-12T22:02:22.245Z
+wf_015,cmnwb7z98002t34jenf5wmbvv,01KP1VG42GPFADFCDPNQ80BP05,true,false,true,45423,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T22:03:08.675Z
+wf_016,cmnwb8leq002v34je2z5eo7fs,01KP1VH06279ZPPKSS7YE5JGA7,true,false,true,24487,Google Drive node: File ID is required for read action.,2026-04-12T22:03:34.177Z
+wf_017,cmnwb9gc8002x34jen1o4bhfn,01KP1VJ7ADH0CD51BWEY4VHAT7,true,false,false,109089,Polling timeout,2026-04-12T22:05:24.272Z
+wf_018,cmnwbbkcd003034je1t6c3mzp,01KP1VN7H7AGJZC4J2D71K95QG,true,false,true,27905,"Google Drive: File not found or not accessible. Check:
+1. File ID is correct
+2. File is shared with your Google account
+3. File hasn't been moved or deleted
+
+Provided file ID: '1FilesFolderXYZ' in parents",2026-04-12T22:05:53.196Z
+wf_019,cmnwbccu6003234jeosrc5xae,01KP1VPBJC1YDVYRW05HZE8330,true,false,true,35520,Unexpected end of JSON input,2026-04-12T22:06:29.733Z
+wf_020,cmnwbcz0t003434jeil7ydz3r,01KP1VQ7PYHDXRKCHGEMKAEEM7,true,false,true,29035,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T22:06:59.779Z
+wf_021,cmnwbdxj2003a34jeud6htaoo,01KP1VRMH37RK73KN3TBZPFKY9,true,true,true,65918,None,2026-04-12T22:08:06.712Z
+wf_022,cmnwbfb5u003c34je1vudy7hy,01KP1VTJ2WYH9RB943HWVJGRT6,true,false,true,49356,Bad control character in string literal in JSON at position 181 (line 1 column 182),2026-04-12T22:08:57.083Z
+wf_023,cmnwbgiog003e34jemhjbytpd,01KP1VW97CZSRMZ9E12M4V36ZF,true,false,true,68521,Discord node: Username is missing!,2026-04-12T22:10:06.611Z
+wf_024,cmnwbibs4003g34je9g1flh8x,01KP1VYVFPF7BFVR7YA0ENEFBQ,true,false,true,64417,Gmail node: Recipient (To) is required.,2026-04-12T22:11:12.031Z
+wf_025,cmnwbjf8c003i34jeeu93lhx8,01KP1W0DEJ6ENY0W3T5798MXBS,true,false,true,50230,"Read failed: {
+  ""error"": {
+    ""code"": 403,
+    ""message"": ""The caller does not have permission"",
+    ""status"": ""PERMISSION_DENIED""
+  }
+}",2026-04-12T22:12:03.276Z

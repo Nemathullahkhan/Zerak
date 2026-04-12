@@ -76,17 +76,23 @@ export const mistralExecutor: NodeExecutor<MistralData> = async ({
     throw new NonRetriableError("Mistral node: User Prompt is missing!");
   }
 
-  const credential = await step.run("get-credential", () => {
-    return prisma.credential.findUnique({
-      where: {
-        id: data.credentialId,
-        userId,
-      },
+  let mistralApiKey = "";
+  if (data.credentialId && data.credentialId === process.env.BENCHMARK_MISTRAL_CREDENTIAL_ID) {
+    mistralApiKey = data.credentialId;
+  } else {
+    const credential = await step.run("get-credential", () => {
+      return prisma.credential.findUnique({
+        where: {
+          id: data.credentialId,
+          userId,
+        },
+      });
     });
-  });
 
-  if (!credential) {
-    throw new NonRetriableError("Mistral node: Credential not found!");
+    if (!credential) {
+      throw new NonRetriableError("Mistral node: Credential not found!");
+    }
+    mistralApiKey = decrypt(credential.value);
   }
 
   const systemPrompt = data.systemPrompt
@@ -96,7 +102,7 @@ export const mistralExecutor: NodeExecutor<MistralData> = async ({
   const userPrompt = Handlebars.compile(data.userPrompt)(context);
 
   const mistral = createMistral({
-    apiKey: decrypt(credential.value),
+    apiKey: mistralApiKey,
   });
 
   try {

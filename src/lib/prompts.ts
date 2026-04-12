@@ -81,8 +81,8 @@ Node data shapes — include every key listed for that node type. Use "" for unk
 - CODE: data: { code: string, variableName: string }
   - Executed in a sandbox with parameter context (prior outputs keyed by variableName). Must return a value stored under this node's variableName.
   - Example: const usersData = context.users.httpResponse.data; return JSON.parse(usersData);
-- IF: data: { condition: string }
-- SWITCH: data: { switchValue: string, cases: Array<{ case: string, nextNodeId: string }> }
+- IF: data: { condition: string, variableName: string }
+- SWITCH: data: { switchValue: string, cases: Array<{ case: string, nextNodeId: string }>, variableName: string }
 - FILTER: data: { sourceVariable: string, condition: string, variableName: string }
   - Filters array at sourceVariable; each element is referenced as item in condition. Output is a new array under variableName.
 - LOOP: data: { sourceVariable: string, itemVariable: string, body: string, variableName: string, execution: "sequential" | "parallel" }
@@ -95,15 +95,41 @@ Node data shapes — include every key listed for that node type. Use "" for unk
 - GOOGLE_FORM_TRIGGER: data: { formId: string, webhookUrl: string }
 - STRIPE_TRIGGER: data: { eventType: string, webhookUrl: string }
 
+VARIABLE REFERENCING — CRITICAL:
+When referencing output from a previous node, you MUST use the correct nested path, not just the variable name.
+Each node's output is stored as an object with specific fields. Always reference the exact field needed.
+IMPORTANT: If you are injecting an entire object or array into a text prompt (e.g., passing a list of posts to an AI node), you MUST use the json helper to correctly format it as text. Example: {{json variableName.httpResponse.data}}. Failing to do this will result in [object Object].
+
+Output shapes per node type:
+- MANUAL_TRIGGER: No output.
+- CONTENT_SOURCE: variableName → output is { transcript: string }. Reference as {{variableName.transcript}}
+- HTTP_REQUEST: variableName → output is { httpResponse: { data: any, status: number, statusText: string } }. Reference as {{variableName.httpResponse.data}} (for the response body). Use {{json variableName.httpResponse.data}} if it returns JSON/arrays.
+- ANTHROPIC, GEMINI, OPENAI, MISTRAL: variableName → output is { aiResponse: string, text: string }. Reference as {{variableName.aiResponse}} (preferred).
+- SLACK: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
+- DISCORD: variableName → output is { success: boolean, message?: string }. Reference {{variableName.message}}.
+- GMAIL: variableName → output is { sent: boolean, messageId: string, threadId: string, to: string, subject: string }. Reference specific fields like {{variableName.sent}}.
+- GOOGLE_SHEETS: variableName → output is { rows: any[][] }. Reference first row first col as {{variableName.rows.0.0}}. Use {{json variableName.rows}} to pass all rows.
+- LOOP: variableName → output is an array of results from the loop body. During loop, use {{itemVariable.field}} to reference current item. Use {{json itemVariable}} if the item is an object.
+- CODE: variableName → output is whatever the code returns. Reference as {{variableName}}. Use {{json variableName}} if the code returns an object.
+
+Examples of correct references:
+- After CONTENT_SOURCE with variableName "youtubeTranscript": next node's prompt: "Summarize: {{youtubeTranscript.transcript}}"
+- After HTTP_REQUEST with variableName "apiResponse": next node's prompt: "Data: {{json apiResponse.httpResponse.data}}"
+- After MISTRAL with variableName "summary": next node's content: "{{summary.aiResponse}}"
+
+WRONG examples (never do these):
+- {{youtubeTranscript}}          ← references entire object, not the transcript
+- {{apiResponse}}                ← references entire object, not the data
+- {{apiResponse.httpResponse.data}} ← results in [object Object] if data is an array/object. Must use {{json ...}}
+- {{summary}}                    ← references entire object, not the AI text
+
 CRITICAL:
 - Include every node in "connections": each non-trigger node must have at least one incident edge (incoming or outgoing) so nothing is disconnected from the flow you describe.
 - Default topology is a linear chain following execution order. IF and SWITCH may branch: one incoming edge to IF/SWITCH; two or more outgoing edges from IF (true/false) or SWITCH (per case) to different target node ids. Every branch must still reach downstream nodes with valid ids.
 - fromNodeId and toNodeId MUST be copied from the "id" fields of nodes in the same workflow (never use type names as ids).
 - Emit a {"type":"connections","connections":[...]} chunk (or a final workflow) that lists ALL edges; partial_nodes alone is not enough.
-- Variable references in prompts: use nested paths (e.g. {{httpVar.httpResponse.data}}, {{mistralVar.aiResponse}}) where the first path segment matches the producing node's variableName.
 - Node positions: (100,100), (260,100), (420,100), …
 - Only use property keys documented for each node type; no arbitrary extra keys on node objects outside id, name, type, data, position.
-- MAKE SURE YOU REFERENCE CORRECT VARIABLES BASED ON THE SCHEMA
 
 
 Example of a question chunk:

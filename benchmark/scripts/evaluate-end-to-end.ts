@@ -22,29 +22,10 @@ async function simpleFetch(url: string, options: RequestInit = {}) {
   return fetch(url, options);
 }
 
+import { fetchWorkflowFromNLP } from "./parser.ts";
+
 async function getGeneratedWorkflow(prompt: string, promptId: string) {
-  const response = await simpleFetch(`${BASE_URL}/api/workflow/stream?benchmark=true`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
-  });
-  if (!response.ok) throw new Error(`Streaming failed: ${response.statusText}`);
-
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error("No reader");
-  let content = "";
-  const decoder = new TextDecoder();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    content += decoder.decode(value, { stream: true });
-  }
-
-  const nodesMatch = content.match(/"type":"partial_nodes","nodes":(\[.*?\])/);
-  let nodes = nodesMatch ? JSON.parse(nodesMatch[1]) : [];
-  const connectionsMatch = content.match(/"type":"connections","connections":(\[.*?\])/);
-  const connections = connectionsMatch ? JSON.parse(connectionsMatch[1]) : [];
-
+  let { nodes, connections } = await fetchWorkflowFromNLP(prompt, promptId, BASE_URL);
   nodes = patchNodesForBenchmark(nodes, promptId);
   return { nodes, connections };
 }

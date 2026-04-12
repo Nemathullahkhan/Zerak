@@ -5,11 +5,19 @@ import { createWriteStream } from "fs";
 import { format } from "@fast-csv/format";
 import dotenv from "dotenv";
 import { patchNodesForBenchmark } from "./patch-nodes.ts";
+import { fetchWorkflowFromNLP } from "./parser.ts";
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+async function getNodesFromNLP(prompt: string, promptId: string, baseUrl: string) {
+  let { nodes, connections } = await fetchWorkflowFromNLP(prompt, promptId, baseUrl);
+  // Apply credential and Google Sheet patching
+  const patchedNodes = patchNodesForBenchmark(nodes, promptId);
+  return { nodes: patchedNodes, connections };
+}
 
 const BASE_URL = process.env.BENCHMARK_BASE_URL ?? "http://localhost:3000";
 const RESULTS_DIR = path.resolve(__dirname, "../results");
@@ -57,34 +65,8 @@ async function main() {
   for (const p of prompts) {
     process.stdout.write(`Testing creation for ${p.id}... `);
 
-    // Build base nodes from expected structure
-    const nodes = p.expected_nodes.map((type: string, i: number) => ({
-      id: `n${i + 1}`,
-      type,
-      name: `${type} Node`,
-      position: { x: i * 200, y: 100 },
-      data: { variableName: p.expected_variables[i] || `var${i}` },
-    }));
-
-    const connections = Array.isArray(p.expected_connection_indices)
-      ? p.expected_connection_indices.map(
-          ([fromIdx, toIdx]: [number, number], i: number) => ({
-            id: `c${i + 1}`,
-            fromNodeId: `n${fromIdx + 1}`,
-            toNodeId: `n${toIdx + 1}`,
-          }),
-        )
-      : p.expected_edges.map(
-          ([from, to]: [string, string], i: number) => ({
-            id: `c${i + 1}`,
-            fromNodeId: `n${p.expected_nodes.indexOf(from) + 1}`,
-            toNodeId: `n${p.expected_nodes.indexOf(to) + 1}`,
-          }),
-        );
-
-    // Apply credential and Google Sheet patching
-    const patchedNodes = patchNodesForBenchmark(nodes, p.id);
-
+    const { nodes: patchedNodes, connections } = await getNodesFromNLP(p.prompt, p.id, BASE_URL);
+    
     const workflow = {
       name: `Benchmark Workflow ${p.id}`,
       nodes: patchedNodes,

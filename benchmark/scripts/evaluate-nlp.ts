@@ -15,38 +15,7 @@ const RESULTS_DIR = path.resolve(__dirname, "../results");
 const DATASET_PATH = path.resolve(__dirname, "../dataset/prompts.json");
 const OUTPUT_PATH = path.resolve(RESULTS_DIR, "nlp-accuracy.csv");
 
-// ─── Parse streamed NDJSON (one JSON object per non-empty line) ───────────────
-
-function parseStreamedWorkflow(raw: string): {
-  nodes: any[];
-  connections: any[];
-} {
-  let nodes: any[] = [];
-  let connections: any[] = [];
-
-  for (const line of raw.split(/\r?\n/)) {
-    const t = line.trim();
-    if (!t) continue;
-    try {
-      const obj = JSON.parse(t) as Record<string, unknown>;
-      if (obj.type === "partial_nodes" && Array.isArray(obj.nodes)) {
-        nodes = obj.nodes as any[];
-      }
-      if (obj.type === "connections" && Array.isArray(obj.connections)) {
-        connections = obj.connections as any[];
-      }
-      if (obj.type === "final" && obj.workflow && typeof obj.workflow === "object") {
-        const w = obj.workflow as { nodes?: any[]; connections?: any[] };
-        if (Array.isArray(w.nodes)) nodes = w.nodes;
-        if (Array.isArray(w.connections)) connections = w.connections;
-      }
-    } catch {
-      // ignore partial lines / markdown
-    }
-  }
-
-  return { nodes, connections };
-}
+import { parseStreamedWorkflow } from "./parser.ts";
 
 function typeByNodeId(nodes: any[]): Map<string, string> {
   const m = new Map<string, string>();

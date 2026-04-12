@@ -1,31 +1,31 @@
 dag_id,category,caught,correct_classification,error_count,duration_ms,success,timestamp
-inv_001,Cycle,true,true,2,442,true,2026-04-12T13:45:43.856Z
-inv_002,Orphan node,true,true,2,459,true,2026-04-12T13:45:44.426Z
-inv_003,Bad variable reference,true,true,1,363,true,2026-04-12T13:45:44.892Z
-inv_004,No trigger,true,true,1,377,true,2026-04-12T13:45:45.373Z
-inv_005,Multiple triggers,true,true,1,413,true,2026-04-12T13:45:45.888Z
-inv_006,Cycle,true,true,2,365,true,2026-04-12T13:45:46.355Z
-inv_007,Orphan node,true,true,2,380,true,2026-04-12T13:45:46.849Z
-inv_008,Bad variable reference,true,true,1,376,true,2026-04-12T13:45:47.327Z
-inv_009,No trigger,true,true,1,359,true,2026-04-12T13:45:47.790Z
-inv_010,Multiple triggers,true,true,1,346,true,2026-04-12T13:45:48.240Z
-inv_011,Cycle,true,true,2,394,true,2026-04-12T13:45:48.737Z
-inv_012,Orphan node,true,true,2,349,true,2026-04-12T13:45:49.190Z
-inv_013,Bad variable reference,true,true,1,347,true,2026-04-12T13:45:49.640Z
-inv_014,No trigger,true,true,1,380,true,2026-04-12T13:45:50.125Z
-inv_015,Multiple triggers,true,true,1,365,true,2026-04-12T13:45:50.593Z
-inv_016,Cycle,true,true,2,349,true,2026-04-12T13:45:51.046Z
-inv_017,Orphan node,true,true,2,360,true,2026-04-12T13:45:51.510Z
-inv_018,Bad variable reference,true,true,1,370,true,2026-04-12T13:45:52.009Z
-inv_019,No trigger,true,true,1,365,true,2026-04-12T13:45:52.478Z
-inv_020,Multiple triggers,true,true,1,331,true,2026-04-12T13:45:52.913Z
-inv_021,Cycle,true,true,2,346,true,2026-04-12T13:45:53.362Z
-inv_022,Orphan node,true,true,2,350,true,2026-04-12T13:45:53.817Z
-inv_023,Bad variable reference,true,true,1,365,true,2026-04-12T13:45:54.298Z
-inv_024,No trigger,true,true,1,345,true,2026-04-12T13:45:54.746Z
-inv_025,Multiple triggers,true,true,1,332,true,2026-04-12T13:45:55.183Z
-inv_026,Cycle,true,true,2,353,true,2026-04-12T13:45:55.639Z
-inv_027,Orphan node,true,true,2,379,true,2026-04-12T13:45:56.120Z
-inv_028,Bad variable reference,true,true,1,383,true,2026-04-12T13:45:56.605Z
-inv_029,No trigger,true,true,1,377,true,2026-04-12T13:45:57.095Z
-inv_030,Multiple triggers,true,true,1,370,true,2026-04-12T13:45:57.569Z
+inv_001,Cycle,true,true,2,1726,true,2026-04-12T22:12:11.720Z
+inv_002,Orphan node,true,true,2,346,true,2026-04-12T22:12:12.175Z
+inv_003,Bad variable reference,true,true,1,348,true,2026-04-12T22:12:12.627Z
+inv_004,No trigger,true,true,1,346,true,2026-04-12T22:12:13.075Z
+inv_005,Multiple triggers,true,true,1,326,true,2026-04-12T22:12:13.506Z
+inv_006,Cycle,true,true,2,347,true,2026-04-12T22:12:13.957Z
+inv_007,Orphan node,true,true,2,315,true,2026-04-12T22:12:14.378Z
+inv_008,Bad variable reference,true,true,1,318,true,2026-04-12T22:12:14.801Z
+inv_009,No trigger,true,true,1,330,true,2026-04-12T22:12:15.232Z
+inv_010,Multiple triggers,true,true,1,331,true,2026-04-12T22:12:15.667Z
+inv_011,Cycle,true,true,2,315,true,2026-04-12T22:12:16.082Z
+inv_012,Orphan node,true,true,2,331,true,2026-04-12T22:12:16.515Z
+inv_013,Bad variable reference,true,true,1,361,true,2026-04-12T22:12:16.980Z
+inv_014,No trigger,true,true,1,348,true,2026-04-12T22:12:17.429Z
+inv_015,Multiple triggers,true,true,1,345,true,2026-04-12T22:12:17.874Z
+inv_016,Cycle,true,true,2,361,true,2026-04-12T22:12:18.340Z
+inv_017,Orphan node,true,true,2,333,true,2026-04-12T22:12:18.778Z
+inv_018,Bad variable reference,true,true,1,314,true,2026-04-12T22:12:19.193Z
+inv_019,No trigger,true,true,1,346,true,2026-04-12T22:12:19.644Z
+inv_020,Multiple triggers,true,true,1,378,true,2026-04-12T22:12:20.125Z
+inv_021,Cycle,true,true,2,344,true,2026-04-12T22:12:20.571Z
+inv_022,Orphan node,true,true,2,381,true,2026-04-12T22:12:21.054Z
+inv_023,Bad variable reference,true,true,1,364,true,2026-04-12T22:12:21.531Z
+inv_024,No trigger,true,true,1,361,true,2026-04-12T22:12:21.994Z
+inv_025,Multiple triggers,true,true,1,397,true,2026-04-12T22:12:22.493Z
+inv_026,Cycle,true,true,2,330,true,2026-04-12T22:12:22.926Z
+inv_027,Orphan node,true,true,2,328,true,2026-04-12T22:12:23.356Z
+inv_028,Bad variable reference,true,true,1,343,true,2026-04-12T22:12:23.800Z
+inv_029,No trigger,true,true,1,334,true,2026-04-12T22:12:24.237Z
+inv_030,Multiple triggers,true,true,1,331,true,2026-04-12T22:12:24.683Z

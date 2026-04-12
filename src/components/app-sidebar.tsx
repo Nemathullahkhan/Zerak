@@ -136,26 +136,6 @@ export const AppSidebar = () => {
         <SidebarMenu className="gap-1">
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Upgrade to Pro"
-              className="gap-3 h-10 px-3 rounded-lg text-amber-500 hover:bg-amber-500/10 hover:text-amber-600"
-              onClick={() => {}}
-            >
-              <StarIcon className="size-[18px] fill-current opacity-20" />
-              <span className="font-semibold">Upgrade to Pro</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Billing Portal"
-              className="gap-3 h-10 px-3 rounded-lg hover:bg-primary/5 hover:text-primary"
-              onClick={() => {}}
-            >
-              <CreditCardIcon className="size-[18px]" />
-              <span className="font-medium">Billing Portal</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
               tooltip="Sign Out"
               className="gap-3 h-10 px-3 rounded-lg hover:bg-destructive/10 hover:text-destructive"
               onClick={() => {
