@@ -1,0 +1,31 @@
+dag_id,category,caught,correct_classification,error_count,duration_ms,success,timestamp
+inv_001,Cycle,true,true,2,442,true,2026-04-12T13:45:43.856Z
+inv_002,Orphan node,true,true,2,459,true,2026-04-12T13:45:44.426Z
+inv_003,Bad variable reference,true,true,1,363,true,2026-04-12T13:45:44.892Z
+inv_004,No trigger,true,true,1,377,true,2026-04-12T13:45:45.373Z
+inv_005,Multiple triggers,true,true,1,413,true,2026-04-12T13:45:45.888Z
+inv_006,Cycle,true,true,2,365,true,2026-04-12T13:45:46.355Z
+inv_007,Orphan node,true,true,2,380,true,2026-04-12T13:45:46.849Z
+inv_008,Bad variable reference,true,true,1,376,true,2026-04-12T13:45:47.327Z
+inv_009,No trigger,true,true,1,359,true,2026-04-12T13:45:47.790Z
+inv_010,Multiple triggers,true,true,1,346,true,2026-04-12T13:45:48.240Z
+inv_011,Cycle,true,true,2,394,true,2026-04-12T13:45:48.737Z
+inv_012,Orphan node,true,true,2,349,true,2026-04-12T13:45:49.190Z
+inv_013,Bad variable reference,true,true,1,347,true,2026-04-12T13:45:49.640Z
+inv_014,No trigger,true,true,1,380,true,2026-04-12T13:45:50.125Z
+inv_015,Multiple triggers,true,true,1,365,true,2026-04-12T13:45:50.593Z
+inv_016,Cycle,true,true,2,349,true,2026-04-12T13:45:51.046Z
+inv_017,Orphan node,true,true,2,360,true,2026-04-12T13:45:51.510Z
+inv_018,Bad variable reference,true,true,1,370,true,2026-04-12T13:45:52.009Z
+inv_019,No trigger,true,true,1,365,true,2026-04-12T13:45:52.478Z
+inv_020,Multiple triggers,true,true,1,331,true,2026-04-12T13:45:52.913Z
+inv_021,Cycle,true,true,2,346,true,2026-04-12T13:45:53.362Z
+inv_022,Orphan node,true,true,2,350,true,2026-04-12T13:45:53.817Z
+inv_023,Bad variable reference,true,true,1,365,true,2026-04-12T13:45:54.298Z
+inv_024,No trigger,true,true,1,345,true,2026-04-12T13:45:54.746Z
+inv_025,Multiple triggers,true,true,1,332,true,2026-04-12T13:45:55.183Z
+inv_026,Cycle,true,true,2,353,true,2026-04-12T13:45:55.639Z
+inv_027,Orphan node,true,true,2,379,true,2026-04-12T13:45:56.120Z
+inv_028,Bad variable reference,true,true,1,383,true,2026-04-12T13:45:56.605Z
+inv_029,No trigger,true,true,1,377,true,2026-04-12T13:45:57.095Z
+inv_030,Multiple triggers,true,true,1,370,true,2026-04-12T13:45:57.569Z

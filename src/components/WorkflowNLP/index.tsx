@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ensureGeneratedWorkflow } from "@/lib/ensure-generated-workflow";
+import { createId } from "@paralleldrive/cuid2";
 import Image from "next/image";
 import AnthropicLogo from "../../../public/logos/anthropic.svg";
 
@@ -35,6 +37,16 @@ const WorkflowNLP = () => {
   } = useStreamingStore();
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  /** Streamed {"type":"connections"} chunks — the model often omits edges on the final object. */
+  const streamConnectionsRef = useRef<
+    Array<{
+      id?: string;
+      fromNodeId: string;
+      toNodeId: string;
+      fromOutput?: string;
+      toInput?: string;
+    }>
+  >([]);
   const [pendingQuestion, setPendingQuestion] = useState<{
     question: string;
     originalPrompt: string;
@@ -53,8 +65,20 @@ const WorkflowNLP = () => {
       switch (chunk.type) {
         case "intent":
         case "plan":
-        case "connection": // support connection step with icon
-          addStep({ type: chunk.type, content: chunk.content });
+        case "connection": // legacy singular type (log line only)
+          addStep({
+            type: chunk.type,
+            content: typeof chunk.content === "string" ? chunk.content : "",
+          });
+          break;
+        case "connections":
+          if (Array.isArray(chunk.connections)) {
+            streamConnectionsRef.current = chunk.connections;
+            addStep({
+              type: "connections",
+              content: `${chunk.connections.length} connection(s)`,
+            });
+          }
           break;
         case "partial_nodes":
           setPartialNodes(chunk.nodes);
@@ -68,23 +92,42 @@ const WorkflowNLP = () => {
           });
           setStreaming(false);
           break;
-        case "final":
-          const cleanWorkflow = {
-            name: chunk.workflow.name,
-            nodes: chunk.workflow.nodes.map((node: any) => ({
-              id: node.id,
-              name: node.name,
-              type: node.type,
-              data: node.data,
-              position: node.position,
-            })),
-            connections: chunk.workflow.connections.map((conn: any) => ({
-              id: conn.id,
+        case "final": {
+          const w = chunk.workflow;
+          if (!w?.nodes?.length) {
+            setError("Model returned an empty workflow");
+            break;
+          }
+          const rawConnections = Array.isArray(w.connections)
+            ? w.connections
+            : streamConnectionsRef.current;
+          const mappedConnections = (rawConnections || []).map(
+            (conn: {
+              id?: string;
+              fromNodeId: string;
+              toNodeId: string;
+              fromOutput?: string;
+              toInput?: string;
+            }) => ({
+              id: conn.id || createId(),
               fromNodeId: conn.fromNodeId,
               toNodeId: conn.toNodeId,
-              fromOutput: conn.fromOutput,
-              toInput: conn.toInput,
-            })),
+              fromOutput: conn.fromOutput ?? "source-1",
+              toInput: conn.toInput ?? "target-1",
+            }),
+          );
+          const mappedNodes = w.nodes.map((node: any) => ({
+            id: node.id,
+            name: node.name,
+            type: node.type,
+            data: node.data ?? {},
+            position: node.position ?? { x: 100, y: 100 },
+          }));
+          const ensured = ensureGeneratedWorkflow(mappedNodes, mappedConnections);
+          const cleanWorkflow = {
+            name: w.name || "generated-workflow",
+            nodes: ensured.nodes,
+            connections: ensured.connections,
           };
           try {
             const response = await fetch("/api/workflow/create", {
@@ -99,6 +142,7 @@ const WorkflowNLP = () => {
             const data = await response.json();
             // Clear store before navigation to avoid stale state
             reset();
+            streamConnectionsRef.current = [];
             router.push(`/workflows/${data.id}`);
           } catch (err) {
             setError(
@@ -106,6 +150,7 @@ const WorkflowNLP = () => {
             );
           }
           break;
+        }
         default:
           console.warn("Unknown chunk type:", chunk.type);
       }
@@ -118,6 +163,7 @@ const WorkflowNLP = () => {
       if (abortControllerRef.current) abortControllerRef.current.abort();
       abortControllerRef.current = new AbortController();
       reset(); // clear all previous data
+      streamConnectionsRef.current = [];
       setStreaming(true);
       setPendingQuestion(null);
       setAnswerInput("");
@@ -202,6 +248,8 @@ const WorkflowNLP = () => {
         return <LightbulbIcon className="size-3 text-blue-400/80" />;
       case "connection":
         return <Link2Icon className="size-3 text-green-400/80" />;
+      case "connections":
+        return <Link2Icon className="size-3 text-emerald-400/80" />;
       case "question":
         return <LightbulbIcon className="size-3 text-amber-400/80" />;
       default:

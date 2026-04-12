@@ -1,0 +1,534 @@
+[
+  {
+    "id": "mkt_001",
+    "domain": "marketing",
+    "subdomain": "lead_capture",
+    "complexity": "easy",
+    "prompt": "When a Google Form lead capture form is submitted, save the lead's name, email, and company to a Google Sheet",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
+    "expected_edges": [["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"]],
+    "expected_variables": ["formData"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Basic lead capture to CRM sheet"
+  },
+  {
+    "id": "mkt_002",
+    "domain": "marketing",
+    "subdomain": "lead_capture",
+    "complexity": "easy",
+    "prompt": "When someone submits a contact form via webhook, send them a welcome email via Gmail and add them to a Google Sheet mailing list",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [["WEBHOOK_TRIGGER", "GOOGLE_GMAIL"], ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS"]],
+    "expected_variables": ["contactData"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Dual-action lead welcome"
+  },
+  {
+    "id": "mkt_003",
+    "domain": "marketing",
+    "subdomain": "content",
+    "complexity": "easy",
+    "prompt": "Every Monday at 8am, fetch the top 5 blog post ideas from a Google Sheet and post a summary to the #marketing Slack channel",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "SLACK"],
+    "expected_edges": [["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"], ["GOOGLE_SHEETS", "SLACK"]],
+    "expected_variables": ["blogIdeas"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Weekly content calendar reminder"
+  },
+  {
+    "id": "mkt_004",
+    "domain": "marketing",
+    "subdomain": "content",
+    "complexity": "easy",
+    "prompt": "When a webhook fires with a topic, use AI to generate a social media caption for it and save the caption to Google Sheets",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "ANTHROPIC", "GOOGLE_SHEETS"],
+    "expected_edges": [["WEBHOOK_TRIGGER", "ANTHROPIC"], ["ANTHROPIC", "GOOGLE_SHEETS"]],
+    "expected_variables": ["topic", "caption"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "AI social caption generator"
+  },
+  {
+    "id": "mkt_005",
+    "domain": "marketing",
+    "subdomain": "campaign",
+    "complexity": "easy",
+    "prompt": "When a Stripe payment for a product is received, send a purchase confirmation email to the customer via Gmail",
+    "expected_nodes": ["STRIPE_TRIGGER", "GOOGLE_GMAIL"],
+    "expected_edges": [["STRIPE_TRIGGER", "GOOGLE_GMAIL"]],
+    "expected_variables": ["paymentData"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Post-purchase email confirmation"
+  },
+  {
+    "id": "mkt_006",
+    "domain": "marketing",
+    "subdomain": "lead_capture",
+    "complexity": "medium",
+    "prompt": "When a Google Form is submitted, use AI to score the lead quality based on their company size and role, if score is high send an immediate Slack alert to #sales-hot-leads, otherwise just add them to the Google Sheet pipeline",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "ANTHROPIC", "IF", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["formData", "leadScore"],
+    "integration_count": 4,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "AI-powered lead scoring and routing"
+  },
+  {
+    "id": "mkt_007",
+    "domain": "marketing",
+    "subdomain": "campaign",
+    "complexity": "medium",
+    "prompt": "When a Stripe subscription is created, if the plan is Pro or Enterprise send a personalised onboarding email via Gmail and add to the VIP Sheet, if it's Starter just add to the standard Sheet",
+    "expected_nodes": ["STRIPE_TRIGGER", "IF", "GOOGLE_GMAIL", "GOOGLE_SHEETS", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["subscriptionData"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": false,
+    "real_world_use": "Subscription tier onboarding routing"
+  },
+  {
+    "id": "mkt_008",
+    "domain": "marketing",
+    "subdomain": "content",
+    "complexity": "medium",
+    "prompt": "Every day at 6am, read yesterday's campaign performance metrics from Google Sheets, use AI to write a one-paragraph performance summary, and post it to the #growth Slack channel",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "ANTHROPIC", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "SLACK"]
+    ],
+    "expected_variables": ["metricsData", "summary"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "Daily AI marketing report"
+  },
+  {
+    "id": "mkt_009",
+    "domain": "marketing",
+    "subdomain": "content",
+    "complexity": "medium",
+    "prompt": "When a webhook fires with a product name, use AI to generate a blog post outline, save the outline to Google Drive, and notify the content team via Slack with the Drive link",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "ANTHROPIC", "GOOGLE_DRIVE", "SLACK"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "SLACK"]
+    ],
+    "expected_variables": ["productName", "outline", "driveFile"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "AI blog outline generator with team notification"
+  },
+  {
+    "id": "mkt_010",
+    "domain": "marketing",
+    "subdomain": "email",
+    "complexity": "medium",
+    "prompt": "Every Friday, read the subscriber list from Google Sheets, loop through each subscriber and send them a personalised weekly newsletter email via Gmail using their first name",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "LOOP", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "LOOP"],
+      ["LOOP", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["subscribers", "currentSubscriber"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": true, "has_ai": false,
+    "real_world_use": "Weekly personalised newsletter blast"
+  },
+  {
+    "id": "mkt_011",
+    "domain": "marketing",
+    "subdomain": "social",
+    "complexity": "medium",
+    "prompt": "When a new Google Drive file is added to the campaigns folder, use AI to extract the key message from the document, generate a Twitter/X caption, and save both to a Google Sheet content calendar",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "GOOGLE_DRIVE", "ANTHROPIC", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["fileData", "documentContent", "caption"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "Auto-repurpose campaign docs to social content"
+  },
+  {
+    "id": "mkt_012",
+    "domain": "marketing",
+    "subdomain": "lead_nurture",
+    "complexity": "hard",
+    "prompt": "When a Google Form lead signs up, use AI to classify them as hot warm or cold based on their job title and company size, if hot send immediate personalised Gmail and Slack alert to #sales, if warm add to a nurture Sheet and send a standard welcome Gmail, if cold just log to Sheet with a low priority flag",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "ANTHROPIC", "IF", "GOOGLE_GMAIL", "SLACK", "GOOGLE_SHEETS", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["formData", "classification"],
+    "integration_count": 4,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "3-tier lead classification and routing"
+  },
+  {
+    "id": "mkt_013",
+    "domain": "marketing",
+    "subdomain": "email",
+    "complexity": "hard",
+    "prompt": "Every Monday, fetch all leads from Google Sheets that haven't been contacted in 7 days, loop through each one, use AI to draft a personalised follow-up email based on their industry, send via Gmail, and update their last contacted date in the Sheet",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "FILTER", "LOOP", "ANTHROPIC", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "FILTER"],
+      ["FILTER", "LOOP"],
+      ["LOOP", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["allLeads", "staleLeads", "currentLead", "followUpEmail"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": true, "has_ai": true,
+    "real_world_use": "Automated stale lead re-engagement"
+  },
+  {
+    "id": "mkt_014",
+    "domain": "marketing",
+    "subdomain": "campaign",
+    "complexity": "hard",
+    "prompt": "When a Stripe payment event fires, fetch the customer from Google Sheets, check their purchase count with a code block, if first purchase send AI-generated welcome series email via Gmail and post celebration to Slack, if 5th purchase send loyalty reward email, otherwise send standard receipt Gmail",
+    "expected_nodes": ["STRIPE_TRIGGER", "GOOGLE_SHEETS", "CODE", "IF", "ANTHROPIC", "GOOGLE_GMAIL", "SLACK", "GOOGLE_GMAIL", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "IF"],
+      ["IF", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "SLACK"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["paymentData", "customerRecord", "purchaseCount", "emailContent"],
+    "integration_count": 4,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "Purchase milestone email automation"
+  },
+  {
+    "id": "mkt_015",
+    "domain": "marketing",
+    "subdomain": "reporting",
+    "complexity": "hard",
+    "prompt": "Every Sunday at 9pm, read the full week's campaign data from multiple Google Sheets tabs (impressions clicks conversions spend), use a code block to compute ROI per channel, use AI to write an executive summary highlighting wins and concerns, save the report to Google Drive, and send it via Gmail to the CMO and post a summary to Slack #leadership",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "CODE", "ANTHROPIC", "GOOGLE_DRIVE", "GOOGLE_GMAIL", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_DRIVE"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["ANTHROPIC", "SLACK"]
+    ],
+    "expected_variables": ["campaignData", "roiData", "executiveSummary", "reportFile"],
+    "integration_count": 5,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "Weekly executive marketing report pipeline"
+  },
+  {
+    "id": "mkt_016",
+    "domain": "marketing",
+    "subdomain": "social",
+    "complexity": "medium",
+    "prompt": "When a webhook fires with a customer review text, use AI to determine sentiment, if positive post the review excerpt to Slack #wins and save to a testimonials Sheet, if negative create an alert in Slack #urgent and log to an issues Sheet",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "ANTHROPIC", "IF", "SLACK", "GOOGLE_SHEETS", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["reviewText", "sentiment"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "Review sentiment routing and logging"
+  },
+  {
+    "id": "mkt_017",
+    "domain": "marketing",
+    "subdomain": "ab_testing",
+    "complexity": "medium",
+    "prompt": "When a webhook fires with an email campaign ID, fetch its open rate and click rate from Google Sheets, use a code block to decide if it's a winner (open rate above 25%), if winner duplicate the campaign to a winners Sheet and notify Slack, if not mark it as underperforming",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS", "CODE", "IF", "GOOGLE_SHEETS", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "IF"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["campaignId", "campaignData", "isWinner"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": false,
+    "real_world_use": "Campaign performance auto-evaluation"
+  },
+  {
+    "id": "mkt_018",
+    "domain": "marketing",
+    "subdomain": "event",
+    "complexity": "medium",
+    "prompt": "When a Google Form event registration is submitted, add registrant to Google Sheet, send a confirmation Gmail with event details, and post a registration count update to the #events Slack channel",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS", "GOOGLE_GMAIL", "SLACK"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "GOOGLE_GMAIL"],
+      ["GOOGLE_SHEETS", "SLACK"]
+    ],
+    "expected_variables": ["registrationData", "registrantRecord"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Event registration automation"
+  },
+  {
+    "id": "mkt_019",
+    "domain": "marketing",
+    "subdomain": "content",
+    "complexity": "hard",
+    "prompt": "Every week, read all blog post titles from a Google Sheet, loop through each one, use AI to generate SEO meta description and keywords for it, update the row in the Sheet with the generated content, and at the end post a completion summary to Slack",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "LOOP", "ANTHROPIC", "GOOGLE_SHEETS", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "LOOP"],
+      ["LOOP", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_SHEETS"],
+      ["LOOP", "SLACK"]
+    ],
+    "expected_variables": ["blogPosts", "currentPost", "seoContent"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": true, "has_ai": true,
+    "real_world_use": "Bulk AI SEO meta generation"
+  },
+  {
+    "id": "mkt_020",
+    "domain": "marketing",
+    "subdomain": "churn",
+    "complexity": "hard",
+    "prompt": "Every day, fetch all customers from Google Sheets who haven't made a purchase in 30 days, loop through each, use AI to generate a personalised win-back offer based on their purchase history, send the offer via Gmail, log the outreach to a retention Sheet, and if the customer has spent over $500 total also send a Slack alert to the account manager",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "FILTER", "LOOP", "ANTHROPIC", "GOOGLE_GMAIL", "GOOGLE_SHEETS", "IF", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "FILTER"],
+      ["FILTER", "LOOP"],
+      ["LOOP", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+      ["GOOGLE_GMAIL", "IF"],
+      ["IF", "SLACK"]
+    ],
+    "expected_variables": ["allCustomers", "inactiveCustomers", "currentCustomer", "winBackOffer"],
+    "integration_count": 4,
+    "has_branch": true, "has_loop": true, "has_ai": true,
+    "real_world_use": "AI-powered churn prevention pipeline"
+  },
+  {
+    "id": "mkt_021",
+    "domain": "marketing",
+    "subdomain": "webinar",
+    "complexity": "medium",
+    "prompt": "When a Google Form webinar registration is submitted, check if the webinar is at capacity by counting Sheet rows with a code block, if capacity reached send a waitlist Gmail, if space available send a confirmation Gmail with the joining link and add to the attendee Sheet",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS", "CODE", "IF", "GOOGLE_GMAIL", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["registrationData", "currentCount", "capacityReached"],
+    "integration_count": 2,
+    "has_branch": true, "has_loop": false, "has_ai": false,
+    "real_world_use": "Webinar capacity management"
+  },
+  {
+    "id": "mkt_022",
+    "domain": "marketing",
+    "subdomain": "affiliate",
+    "complexity": "medium",
+    "prompt": "When a Stripe payment comes in with an affiliate code in the metadata, extract the affiliate ID using a code block, look up the affiliate in Google Sheets, calculate their commission, send them a commission notification Gmail, and log the transaction to the affiliate Sheet",
+    "expected_nodes": ["STRIPE_TRIGGER", "CODE", "GOOGLE_SHEETS", "CODE", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "CODE"],
+      ["CODE", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "CODE"],
+      ["CODE", "GOOGLE_GMAIL"],
+      ["GOOGLE_GMAIL", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["paymentData", "affiliateId", "affiliateRecord", "commission"],
+    "integration_count": 3,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Affiliate commission tracking and notification"
+  },
+  {
+    "id": "mkt_023",
+    "domain": "marketing",
+    "subdomain": "referral",
+    "complexity": "easy",
+    "prompt": "When a webhook fires with a referral signup, log the referral to Google Sheets and send a thank-you email to the referrer via Gmail",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "GOOGLE_SHEETS"],
+      ["WEBHOOK_TRIGGER", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["referralData"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Referral tracking and acknowledgement"
+  },
+  {
+    "id": "mkt_024",
+    "domain": "marketing",
+    "subdomain": "nps",
+    "complexity": "medium",
+    "prompt": "When a Google Form NPS survey is submitted, if score is 9 or 10 send a thank-you email asking for a public review via Gmail, if score is 7 or 8 send a neutral acknowledgement, if score is 0 to 6 create a Slack alert in #customer-success and log the detractor to a follow-up Sheet",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "IF", "GOOGLE_GMAIL", "GOOGLE_GMAIL", "SLACK", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "SLACK"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["surveyData"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": false,
+    "real_world_use": "NPS response routing"
+  },
+  {
+    "id": "mkt_025",
+    "domain": "marketing",
+    "subdomain": "competitor",
+    "complexity": "hard",
+    "prompt": "Every Monday, fetch competitor pricing data from a Google Sheet, use AI to compare it against our pricing from another Sheet tab, generate a competitive analysis summary, save the analysis to Google Drive, post key insights to Slack #strategy, and if any competitor is now cheaper than us flag it with an urgent alert",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "ANTHROPIC", "IF", "GOOGLE_DRIVE", "SLACK", "SLACK"],
+    "expected_edges": [
+      ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_DRIVE"],
+      ["IF", "SLACK"],
+      ["IF", "SLACK"]
+    ],
+    "expected_variables": ["competitorData", "analysis", "pricingAlert"],
+    "integration_count": 4,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "Weekly competitive pricing intelligence"
+  },
+  {
+    "id": "mkt_026",
+    "domain": "marketing",
+    "subdomain": "product_launch",
+    "complexity": "hard",
+    "prompt": "When a webhook fires signalling a product launch, use AI to generate press release copy, product description, and 5 social captions all at once, save each to a separate Google Drive file, log all asset links to a launch Sheet, and send a launch readiness summary to the team via Gmail and Slack",
+    "expected_nodes": ["WEBHOOK_TRIGGER", "ANTHROPIC", "ANTHROPIC", "ANTHROPIC", "GOOGLE_DRIVE", "GOOGLE_DRIVE", "GOOGLE_DRIVE", "GOOGLE_SHEETS", "GOOGLE_GMAIL", "SLACK"],
+    "expected_edges": [
+      ["WEBHOOK_TRIGGER", "ANTHROPIC"],
+      ["WEBHOOK_TRIGGER", "ANTHROPIC"],
+      ["WEBHOOK_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "GOOGLE_DRIVE"],
+      ["ANTHROPIC", "GOOGLE_DRIVE"],
+      ["ANTHROPIC", "GOOGLE_DRIVE"],
+      ["GOOGLE_DRIVE", "GOOGLE_SHEETS"],
+      ["GOOGLE_SHEETS", "GOOGLE_GMAIL"],
+      ["GOOGLE_SHEETS", "SLACK"]
+    ],
+    "expected_variables": ["launchData", "pressRelease", "productDescription", "socialCaptions", "assetLinks"],
+    "integration_count": 5,
+    "has_branch": false, "has_loop": false, "has_ai": true,
+    "real_world_use": "Product launch asset generation pipeline"
+  },
+  {
+    "id": "mkt_027",
+    "domain": "marketing",
+    "subdomain": "lead_capture",
+    "complexity": "easy",
+    "prompt": "When a Google Form is submitted with a company email, save the lead to Google Sheets and post a notification to the #new-leads Slack channel with their name and company",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS", "SLACK"],
+    "expected_edges": [["GOOGLE_FORM_TRIGGER", "GOOGLE_SHEETS"], ["GOOGLE_SHEETS", "SLACK"]],
+    "expected_variables": ["formData"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Lead capture with team notification"
+  },
+  {
+    "id": "mkt_028",
+    "domain": "marketing",
+    "subdomain": "discount",
+    "complexity": "medium",
+    "prompt": "When a Stripe payment fails, wait and check the failure reason with a code block, if card declined send a payment recovery Gmail with an alternative payment link, if subscription cancelled send a win-back offer email, and log both scenarios to a recovery tracking Sheet",
+    "expected_nodes": ["STRIPE_TRIGGER", "CODE", "IF", "GOOGLE_GMAIL", "GOOGLE_GMAIL", "GOOGLE_SHEETS"],
+    "expected_edges": [
+      ["STRIPE_TRIGGER", "CODE"],
+      ["CODE", "IF"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_SHEETS"]
+    ],
+    "expected_variables": ["paymentData", "failureReason"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": false,
+    "real_world_use": "Payment failure recovery automation"
+  },
+  {
+    "id": "mkt_029",
+    "domain": "marketing",
+    "subdomain": "influencer",
+    "complexity": "medium",
+    "prompt": "When a Google Form influencer application is submitted, use AI to score their profile based on follower count engagement rate and niche alignment, if score above 70 add to approved Sheet and send acceptance Gmail, if below 70 add to declined Sheet and send a polite rejection Gmail",
+    "expected_nodes": ["GOOGLE_FORM_TRIGGER", "ANTHROPIC", "IF", "GOOGLE_SHEETS", "GOOGLE_GMAIL", "GOOGLE_SHEETS", "GOOGLE_GMAIL"],
+    "expected_edges": [
+      ["GOOGLE_FORM_TRIGGER", "ANTHROPIC"],
+      ["ANTHROPIC", "IF"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "GOOGLE_GMAIL"],
+      ["IF", "GOOGLE_SHEETS"],
+      ["IF", "GOOGLE_GMAIL"]
+    ],
+    "expected_variables": ["applicationData", "influencerScore"],
+    "integration_count": 3,
+    "has_branch": true, "has_loop": false, "has_ai": true,
+    "real_world_use": "Influencer application screening"
+  },
+  {
+    "id": "mkt_030",
+    "domain": "marketing",
+    "subdomain": "reporting",
+    "complexity": "easy",
+    "prompt": "Every day at 7am, read the total leads count from Google Sheets and post a daily leads dashboard update to the #marketing Slack channel",
+    "expected_nodes": ["SCHEDULE_TRIGGER", "GOOGLE_SHEETS", "SLACK"],
+    "expected_edges": [["SCHEDULE_TRIGGER", "GOOGLE_SHEETS"], ["GOOGLE_SHEETS", "SLACK"]],
+    "expected_variables": ["leadsData"],
+    "integration_count": 2,
+    "has_branch": false, "has_loop": false, "has_ai": false,
+    "real_world_use": "Daily leads pulse check"
+  }
+]

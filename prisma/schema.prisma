@@ -14,7 +14,7 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String    @idh
   name          String
   email         String
   emailVerified Boolean   @default(false)

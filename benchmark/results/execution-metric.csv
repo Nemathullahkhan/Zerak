@@ -1,0 +1,11 @@
+prompt_id,workflow_id,execution_id,success,latency_ms,error,timestamp
+wf_001,cmnvt44mu003h2sjezqdvmrok,01KP0YJK2FCRJX4CAEDJXWNCF6,false,14530,Mistral node: User Prompt is missing!,2026-04-12T13:37:37.406Z
+wf_002,cmnvt476y003i2sjewxj55bkn,01KP0YK2619CPA6P33VMBHZWGV,false,14609,HTTP Request node: No endpoint configured,2026-04-12T13:37:53.033Z
+wf_003,cmnvt49qg003j2sje8xenauul,01KP0YKHE2F3AXKQSA6GCFC63Z,false,12092,Google Sheets: Missing required fields (action or variableName),2026-04-12T13:38:06.131Z
+wf_004,cmnvt4cbm003k2sje1tsm8qjl,01KP0YKY81MSE59F09VA83X3C7,false,14620,HTTP Request node: No endpoint configured,2026-04-12T13:38:21.763Z
+wf_005,cmnvt4esm003l2sjeoct1vrjl,01KP0YMDHFE3PBS0VZMTKB8R9R,false,14754,HTTP Request node: No endpoint configured,2026-04-12T13:38:37.531Z
+wf_006,cmnvt4hbx003m2sje3obtlzg6,01KP0YMWWTRBDE78KGRJNH0WX2,false,11972,HTTP Request node: No endpoint configured,2026-04-12T13:38:50.516Z
+wf_007,cmnvt4k1d003n2sje4qs1c0jl,01KP0YN9JBC1B26K4RHXW9SXTK,false,15177,HTTP Request node: No endpoint configured,2026-04-12T13:39:06.699Z
+wf_008,cmnvt4mjp003o2sje7g7gmbfm,01KP0YNSCB4HQJTN3K2RNB8DP6,false,14624,HTTP Request node: No endpoint configured,2026-04-12T13:39:22.335Z
+wf_009,cmnvt4p18003p2sjegk4rr2tk,01KP0YP8NBD4Q0JFVKD40V663T,false,13370,IF node: condition is required,2026-04-12T13:39:36.712Z
+wf_010,cmnvt4rj9003q2sje2w1hroag,01KP0YPPPDVBB209BNK8XC75YX,false,11901,Google Drive node: Action is required.,2026-04-12T13:39:49.619Z

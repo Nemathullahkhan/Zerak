@@ -14,7 +14,7 @@ export function getModel(forBenchmark = false) {
   const anthropic = createAnthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
-  
+
   // Using the same model version as in route.ts
   return anthropic("claude-sonnet-4-5");
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export interface StreamingStep {
-  type: 'intent' | 'plan' | 'question';
+  type: "intent" | "plan" | "question" | "connection" | "connections";
   content: string;
 }
 

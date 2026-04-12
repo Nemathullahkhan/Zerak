@@ -7,19 +7,49 @@ import {
   type IncomingGeneratedConnection,
   type IncomingGeneratedNode,
 } from "@/lib/remap-generated-workflow-ids";
+import { ensureGeneratedWorkflow } from "@/lib/ensure-generated-workflow";
 
 export async function POST(req: Request) {
   try {
-    const { user } = await requireAuth();
-    const body = await req.json();
-    const { name, nodes, connections } = body;
+    const url = new URL(req.url);
+    const isBenchmark = url.searchParams.get("benchmark") === "true";
 
-    if (!Array.isArray(nodes) || !Array.isArray(connections)) {
+    let userId: string;
+
+    if (isBenchmark) {
+      // For benchmarks, we use a dedicated benchmark user or bypass auth
+      // In a real research scenario, you'd have a 'benchmark-user' in the DB
+      userId = "rtCTm1oS1UFJe1cO5cWnSLsQTds3heTP";
+
+      // Ensure the benchmark user exists in the DB
+      await prisma.user.upsert({
+        where: { id: userId },
+        update: {},
+        create: {
+          id: userId,
+          email: "benchmark@zerak.ai",
+          name: "Benchmark User",
+        },
+      });
+    } else {
+      const { user } = await requireAuth();
+      userId = user.id;
+    }
+
+    const body = await req.json();
+    const { name, nodes: rawNodes, connections: rawConnections } = body;
+
+    if (!Array.isArray(rawNodes) || !Array.isArray(rawConnections)) {
       return NextResponse.json(
         { error: "Invalid payload: nodes and connections must be arrays" },
         { status: 400 },
       );
     }
+
+    const { nodes, connections } = ensureGeneratedWorkflow(
+      rawNodes as IncomingGeneratedNode[],
+      rawConnections as IncomingGeneratedConnection[],
+    );
 
     const { remappedNodes, remappedConnections } = remapGeneratedWorkflowIds(
       nodes as IncomingGeneratedNode[],
@@ -29,7 +59,7 @@ export async function POST(req: Request) {
     const workflow = await prisma.workflow.create({
       data: {
         name,
-        userId: user.id,
+        userId,
         nodes: {
           createMany: {
             data: remappedNodes,
@@ -60,6 +90,9 @@ export async function POST(req: Request) {
         );
       }
     }
-    return NextResponse.json({ error: "Failed to create workflow" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create workflow" },
+      { status: 500 },
+    );
   }
 }

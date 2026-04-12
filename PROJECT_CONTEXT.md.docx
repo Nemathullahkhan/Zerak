@@ -1,5 +1,5 @@
 # Zerak — Master Context Document
-**Version:** 2026-04-09
+**Version:** 2026-04-10
 **Purpose:** LLM context window reference for development, debugging, and feature work
 
 ---
@@ -19,7 +19,7 @@ Zerak is an AI-native workflow automation platform designed to simplify the crea
 | Database | PostgreSQL (Neon) | - | Serverless relational database |
 | ORM | Prisma | 7.4.0 | Database client and schema management |
 | Authentication | Better Auth | 1.4.18 | Unified authentication for Next.js |
-| AI Integration | AI SDK (Vercel) | 6.0.86 | Unified interface for LLMs (Anthropic, OpenAI, Gemini) |
+| AI Integration | AI SDK (Vercel) | 6.0.86 | Unified interface for LLMs (Anthropic, OpenAI, Gemini, Mistral) |
 | Templating | Handlebars | 4.7.8 | Variable interpolation in prompts and data fields |
 
 ## 3. Project Structure
@@ -53,7 +53,7 @@ Zerak is an AI-native workflow automation platform designed to simplify the crea
 - **Node:** A single step in a workflow. Stores `type`, `position`, and `data` (JSON). Can link to a `Credential`.
 - **Connection:** Links two nodes from an output handle to an input handle.
 - **Execution:** A record of a workflow run. Stores `status`, `output` (final context), and `__metadata__` (timings and per-node status).
-- **Credential:** Encrypted storage for API keys (OpenAI, Anthropic, etc.), scoped to a user.
+- **Credential:** Encrypted storage for API keys (OpenAI, Anthropic, Gemini, Mistral, etc.), scoped to a user.
 - **ScheduledWorkflow:** Stores CRON expressions and next run times for automated triggers.
 
 ## 6. API Reference
@@ -80,7 +80,7 @@ Zerak is an AI-native workflow automation platform designed to simplify the crea
 - **Looping:** `LOOP` nodes iterate over arrays, executing sub-nodes for each item and collecting results.
 
 ## 9. External Integrations
-- **AI Providers:** OpenAI, Anthropic, Gemini (via Vercel AI SDK).
+- **AI Providers:** OpenAI, Anthropic, Gemini, **Mistral** (via Vercel AI SDK `@ai-sdk/mistral`). Each AI provider has a dedicated `NodeType` enum value, `CredentialType` entry, Inngest realtime channel, executor, configuration dialog (`form-fields.tsx` + `dialog.tsx`), and React Flow canvas node component.
 - **Google Services:** Sheets (read/write/append), Drive (search/read), Gmail (send), Forms (trigger).
 - **Messaging:** Slack and Discord via Webhooks.
 - **Payments:** Stripe (Trigger-based events).
@@ -111,3 +111,52 @@ Zerak is an AI-native workflow automation platform designed to simplify the crea
 
 ## 14. LLM Quick-Reference Summary
 Zerak is a Next.js 15 workflow automation platform using Inngest for durable orchestration and React Flow for visual editing. Workflows are DAGs of nodes (AI, Google Sheets, Gmail, Logic) connected linearly or via branches. Each node has an associated Executor in `src/features/executions/components/[type]/executor.ts` that processes input from a shared `context` and writes output using a `variableName`. The platform supports NLP workflow generation via a streaming API (`/api/workflow/stream`) using Anthropic's Claude. Data is stored in PostgreSQL (Neon) via Prisma, with user API keys encrypted at rest. Real-time monitoring is achieved by polling tRPC endpoints that read execution metadata updated by Inngest steps. When debugging, focus on `src/app/api/inngest/functions.ts` for execution flow and `src/features/executions/lib/executor-registry.ts` for action logic.
+
+## 15. Mistral AI Node
+**Added:** 2026-04-10
+
+The Mistral node follows the same architecture as all AI provider nodes (Gemini, Anthropic, OpenAI).
+
+### Files Added
+| File | Purpose |
+|------|---------|
+| `src/app/inngest/channels/mistral.ts` | Inngest realtime pub/sub channel (`mistral-execution`) for streaming `loading \| success \| error` status to the frontend |
+| `src/features/executions/components/mistral/actions.ts` | Server action that issues a scoped Inngest subscription token for the Mistral channel |
+| `src/features/executions/components/mistral/executor.ts` | Durable Inngest step executor using `createMistral` from `@ai-sdk/mistral`; validates inputs, decrypts credentials, interpolates Handlebars prompts, generates text, publishes realtime status |
+| `src/features/executions/components/mistral/form-fields.tsx` | Reusable form component (`id="mistral-form"`) with `showSave` prop — mirrors Anthropic `form-fields.tsx` pattern |
+| `src/features/executions/components/mistral/dialog.tsx` | Thin dialog shell wrapping `MistralFormFields`; logo in title, Cancel/Save footer linked via `form="mistral-form"` |
+| `src/features/executions/components/mistral/node.tsx` | React Flow canvas node; subscribes to `MISTRAL_CHANNEL_NAME` for live status, opens `MistralDialog` on settings/double-click |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `prisma/schema.prisma` | Added `MISTRAL` to `NodeType` and `CredentialType` enums |
+| `prisma/migrations/20260410045114_mistral_node/` | DB migration applying enum additions to NeonDB |
+| `src/config/node-components.ts` | Mapped `NodeType.MISTRAL` → `MistralNode` |
+| `src/features/executions/lib/executor-registry.ts` | Mapped `NodeType.MISTRAL` → `mistralExecutor` |
+| `src/components/node-selector.tsx` | Added Mistral to the drag-and-drop sidebar under AI nodes |
+| `src/features/credentials/components/credential.tsx` | Added `CredentialType.MISTRAL` to the credential type dropdown |
+| `src/features/credentials/components/credentials.tsx` | Added `MISTRAL` to the `credentialLogos` display map |
+
+### Available Models
+- `mistral-large-latest`
+- `mistral-small-latest`
+- `mistral-medium-latest`
+- `open-mistral-nemo`
+- `pixtral-large-latest`
+- `ministral-8b-latest`
+
+### Node Output Shape
+```json
+{
+  "[variableName]": {
+    "aiResponse": "<generated text>",
+    "text": "<generated text>",
+    "__usage__": { "promptTokens": 0, "completionTokens": 0, "totalTokens": 0 }
+  }
+}
+```
+Reference in downstream nodes via `{{variableName.text}}`.
+
+### BOM Fix (Migration Note)
+The existing migration file `20260329235716_google_drive_node/migration.sql` contained a UTF-8 BOM (`0xEF 0xBB 0xBF`) which caused Prisma's shadow database to fail during `migrate dev`. The BOM was stripped from all migration SQL files as part of this work. Future migration files must be saved in UTF-8 **without** BOM encoding.

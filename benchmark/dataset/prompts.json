@@ -1,12 +1,13 @@
 [
   {
     "id": "wf_001",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
+    "prompt": "When a new lead submits a Google Form, use Mistral AI with model 'mistral-large' to categorize their interest level from the form data. Send a tailored follow-up email via Gmail to 'lead@example.com' with subject 'Welcome', then append the lead details to Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Leads' with range 'A:D'.",
+    "complexity": "medium",
     "expected_nodes": [
       "GOOGLE_FORM_TRIGGER",
       "MISTRAL",
-      "SLACK"
+      "GMAIL",
+      "GOOGLE_SHEETS"
     ],
     "expected_edges": [
       [
@@ -15,92 +16,126 @@
       ],
       [
         "MISTRAL",
-        "SLACK"
+        "GMAIL"
+      ],
+      [
+        "GMAIL",
+        "GOOGLE_SHEETS"
       ]
     ],
     "expected_variables": [
       "formData",
-      "aiSummary"
+      "category",
+      "emailContent"
     ],
-    "integration_count": 3,
+    "integration_count": 4,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_002",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
+    "prompt": "Every morning, fetch the latest blog posts by making a GET HTTP request to endpoint 'https://api.rss2json.com/v1/api.json', summarize them using Mistral AI with model 'mistral-large'. Then send the summaries to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/abc'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
+      "HTTP_REQUEST",
+      "MISTRAL",
+      "DISCORD"
     ],
     "expected_edges": [
       [
-        "GOOGLE_DRIVE",
-        "GMAIL"
+        "HTTP_REQUEST",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "fileData"
+      "rssFeed",
+      "summary"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_003",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
+    "prompt": "Read data from Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Topics' range 'A:B' using 'read' action. Loop through the rows sequentially, use Mistral AI with model 'mistral-large' to generate a detailed blog outline for each topic, then save each outline as a new document in Google Drive folderId '1DriveFolderXYZ'.",
+    "complexity": "hard",
     "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
+      "GOOGLE_SHEETS",
+      "LOOP",
+      "MISTRAL",
+      "GOOGLE_DRIVE"
     ],
     "expected_edges": [
       [
-        "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
+        "GOOGLE_SHEETS",
+        "LOOP"
+      ],
+      [
+        "LOOP",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GOOGLE_DRIVE"
       ]
     ],
     "expected_variables": [
-      "payload"
+      "topics",
+      "topicItem",
+      "outline"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
+    "has_loop": true,
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_004",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
+    "prompt": "When a webhook is received via HTTP POST request at endpoint 'https://api.example.com/webhook', use Mistral AI with model 'mistral-large' to generate relevant hashtags and trending keywords. Then append the post link and suggested tags to a Google Sheet with spreadsheetId '1BxiMVs0XRYFgwnmacXYZ' on sheetName 'Hashtags' range 'A:C'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
+      "HTTP_REQUEST",
+      "MISTRAL",
+      "GOOGLE_SHEETS"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
-        "DISCORD"
+        "HTTP_REQUEST",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GOOGLE_SHEETS"
       ]
     ],
     "expected_variables": [
-      "paymentData"
+      "postData",
+      "hashtags"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_005",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
+    "prompt": "Manually trigger a workflow that fetches pricing data by making a GET HTTP request to endpoint 'https://api.competitor.com/pricing'. Use Mistral AI with model 'mistral-large' to analyze market positioning, and send a summary report via Gmail to 'strategy@company.com' with the subject 'Competitor Analysis Report'.",
+    "complexity": "medium",
     "expected_nodes": [
       "MANUAL_TRIGGER",
       "HTTP_REQUEST",
-      "MISTRAL"
+      "MISTRAL",
+      "GMAIL"
     ],
     "expected_edges": [
       [
@@ -110,5249 +145,692 @@
       [
         "HTTP_REQUEST",
         "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "htmlContent",
-      "aiSummary"
+      "competitorData",
+      "analysis"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_006",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
+    "prompt": "When a high-priority server alert is received via HTTP POST request at endpoint 'https://api.alerts.com/webhook', use Mistral AI with model 'mistral-large' to analyze the error logs. Post the suggested immediate troubleshooting steps to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/devops'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
+      "HTTP_REQUEST",
       "MISTRAL",
-      "SLACK"
+      "DISCORD"
     ],
     "expected_edges": [
       [
-        "GOOGLE_FORM_TRIGGER",
+        "HTTP_REQUEST",
         "MISTRAL"
       ],
       [
         "MISTRAL",
-        "SLACK"
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "formData",
-      "aiSummary"
+      "alertLogs",
+      "troubleshooting"
     ],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_007",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
+    "prompt": "Whenever a new issue is opened in GitHub via an HTTP GET reqeust to endpoint 'https://api.github.com/repos/org/repo/issues', use Mistral AI with model 'mistral-large' to automatically label it based on content. Send a notification with the proposed labels to Discord using webhookUrl 'https://discord.com/api/webhooks/123/github'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
+      "HTTP_REQUEST",
+      "MISTRAL",
+      "DISCORD"
     ],
     "expected_edges": [
       [
-        "GOOGLE_DRIVE",
-        "GMAIL"
+        "HTTP_REQUEST",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "fileData"
+      "githubIssue",
+      "labels"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_008",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
+    "prompt": "Manually trigger a workflow that fetches daily cloud infrastructure costs via a GET HTTP request to endpoint 'https://api.cloud.com/costs'. Use an IF condition to check if the spending exceeds a threshold, and if so, send an alert email via Gmail to 'admin@company.com' with subject 'High Cloud Costs Alert'.",
+    "complexity": "medium",
     "expected_nodes": [
+      "MANUAL_TRIGGER",
       "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
+      "IF",
+      "GMAIL"
     ],
     "expected_edges": [
       [
+        "MANUAL_TRIGGER",
+        "HTTP_REQUEST"
+      ],
+      [
         "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
+        "IF"
+      ],
+      [
+        "IF",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "payload"
+      "costs",
+      "isHighCost"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 3,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": false,
+    "expected_output": null
   },
   {
     "id": "wf_009",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
+    "prompt": "When a Google Form is submitted for a new software access request, use an IF node to check the department. If IT, automatically trigger a POST HTTP request to endpoint 'https://api.internal.com/access' to grant access. Otherwise, forward the request via Gmail to 'support@company.com' with subject 'Access Request Needs Approval'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
+      "GOOGLE_FORM_TRIGGER",
+      "IF",
+      "HTTP_REQUEST",
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
-        "DISCORD"
+        "GOOGLE_FORM_TRIGGER",
+        "IF"
+      ],
+      [
+        "IF",
+        "HTTP_REQUEST"
+      ],
+      [
+        "IF",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "paymentData"
+      "formData",
+      "isIT"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 4,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": false,
+    "expected_output": null
   },
   {
     "id": "wf_010",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
+    "prompt": "When a new security log file is uploaded to Google Drive folderId '1DriveFolderXYZ', use Mistral AI with model 'mistral-large' to scan for anomalous behavior. Use an IF node to determine if threats are detected, and send a critical alert to Discord using webhookUrl 'https://discord.com/api/webhooks/123/security'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
+      "GOOGLE_DRIVE",
+      "MISTRAL",
+      "IF",
+      "DISCORD"
     ],
     "expected_edges": [
       [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
+        "GOOGLE_DRIVE",
+        "MISTRAL"
       ],
       [
-        "HTTP_REQUEST",
-        "MISTRAL"
+        "MISTRAL",
+        "IF"
+      ],
+      [
+        "IF",
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "htmlContent",
-      "aiSummary"
+      "logContent",
+      "isThreat"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 3,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_011",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
+    "prompt": "Read data from Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Leads' range 'A:D' using 'read' action. Use Mistral AI with model 'mistral-large' to research the company recent news and draft a personalized outreach email, then send it via Gmail to 'prospect@company.com' with subject 'Collaboration Opportunity'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
+      "GOOGLE_SHEETS",
       "MISTRAL",
-      "SLACK"
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "GOOGLE_FORM_TRIGGER",
+        "GOOGLE_SHEETS",
         "MISTRAL"
       ],
       [
         "MISTRAL",
-        "SLACK"
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "formData",
-      "aiSummary"
+      "leadRow",
+      "outreachEmail"
     ],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_012",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
+    "prompt": "When an email is received from a potential lead via Gmail from 'contact@lead.com', use Mistral AI with model 'mistral-large' to perform sentiment analysis. Append the lead status in a Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Status' range 'A:C' using 'append' action.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
+      "GMAIL",
+      "MISTRAL",
+      "GOOGLE_SHEETS"
     ],
     "expected_edges": [
       [
-        "GOOGLE_DRIVE",
-        "GMAIL"
+        "GMAIL",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GOOGLE_SHEETS"
       ]
     ],
     "expected_variables": [
-      "fileData"
+      "incomingEmail",
+      "sentiment"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_013",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
+    "prompt": "Manually trigger a workflow that reads a LinkedIn profile URL from a Google Sheet with spreadsheetId '1CRMSheet123' on sheetName 'Profiles' range 'A:B' using 'read'. Use Mistral AI with model 'mistral-large' to draft a unique icebreaker message, and send it via Gmail to 'sales@company.com' with subject 'Icebreaker Draft'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
+      "MANUAL_TRIGGER",
+      "GOOGLE_SHEETS",
+      "MISTRAL",
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "HTTP_REQUEST",
+        "MANUAL_TRIGGER",
         "GOOGLE_SHEETS"
+      ],
+      [
+        "GOOGLE_SHEETS",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "payload"
+      "linkedInUrl",
+      "icebreaker"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_014",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
+    "prompt": "On a Google Form submission for a demo request, use Mistral AI with model 'mistral-large' to qualify the lead based on their responses. Use an IF node to check criteria, and if met, send a personalized scheduling link via Gmail to 'lead@company.com' with subject 'Schedule your demo'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
+      "GOOGLE_FORM_TRIGGER",
+      "MISTRAL",
+      "IF",
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
-        "DISCORD"
+        "GOOGLE_FORM_TRIGGER",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "IF"
+      ],
+      [
+        "IF",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "paymentData"
+      "formData",
+      "isQualified"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 3,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_015",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
+    "prompt": "Read sales performance data from a Google Sheet with spreadsheetId '1SalesSheet456' on sheetName 'WeeklyData' range 'A:F' using 'read'. Use Mistral AI with model 'mistral-large' to summarize the data, and post the key insights and trends to a Discord channel using webhookUrl 'https://discord.com/api/webhooks/123/sales'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
+      "GOOGLE_SHEETS",
+      "MISTRAL",
+      "DISCORD"
     ],
     "expected_edges": [
       [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
+        "GOOGLE_SHEETS",
+        "MISTRAL"
       ],
       [
-        "HTTP_REQUEST",
-        "MISTRAL"
+        "MISTRAL",
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "htmlContent",
-      "aiSummary"
+      "salesData",
+      "insights"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_016",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
+    "prompt": "When a new invoice PDF is uploaded to Google Drive folderId '1InvoiceFolderXYZ', use Mistral AI with model 'mistral-large' to extract the invoice number, date, and total amount. Append this information to a master Google Sheet with spreadsheetId '1FinanceSheet789' on sheetName 'Invoices' range 'A:E' using 'append' action.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
+      "GOOGLE_DRIVE",
       "MISTRAL",
-      "SLACK"
+      "GOOGLE_SHEETS"
     ],
     "expected_edges": [
       [
-        "GOOGLE_FORM_TRIGGER",
+        "GOOGLE_DRIVE",
         "MISTRAL"
       ],
       [
         "MISTRAL",
-        "SLACK"
+        "GOOGLE_SHEETS"
       ]
     ],
     "expected_variables": [
-      "formData",
-      "aiSummary"
+      "invoiceFile",
+      "extractedData"
     ],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_017",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
+    "prompt": "On a Google Form submission containing contract details, use Mistral AI with model 'mistral-large' to draft standard contract text. Create a new document with this text in Google Drive folderId '1ContractsFolderXYZ'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
+      "GOOGLE_FORM_TRIGGER",
+      "MISTRAL",
+      "GOOGLE_DRIVE"
     ],
     "expected_edges": [
       [
-        "GOOGLE_DRIVE",
-        "GMAIL"
+        "GOOGLE_FORM_TRIGGER",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GOOGLE_DRIVE"
       ]
     ],
     "expected_variables": [
-      "fileData"
+      "formData",
+      "contractText"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_018",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
+    "prompt": "Manually trigger a workflow that reads from Google Drive folderId '1FilesFolderXYZ'. Loop through the files sequentially, use Mistral AI with model 'mistral-large' to generate a file name from its content, and update the file in Google Drive.",
+    "complexity": "hard",
     "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
+      "MANUAL_TRIGGER",
+      "GOOGLE_DRIVE",
+      "LOOP",
+      "MISTRAL",
+      "GOOGLE_DRIVE"
     ],
     "expected_edges": [
       [
-        "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
+        "MANUAL_TRIGGER",
+        "GOOGLE_DRIVE"
+      ],
+      [
+        "GOOGLE_DRIVE",
+        "LOOP"
+      ],
+      [
+        "LOOP",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "GOOGLE_DRIVE"
+      ]
+    ],
+    "expected_connection_indices": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
       ]
     ],
     "expected_variables": [
-      "payload"
+      "fileList",
+      "fileItem",
+      "newName"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
+    "has_loop": true,
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_019",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
+    "prompt": "When a POST HTTP request is received at endpoint 'https://api.signatures.com/webhook', download the signed PDF from Google Drive folderId '1SignedDocsXYZ', and send a confirmation email via Gmail to 'client@company.com' with subject 'Your signed document'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
+      "HTTP_REQUEST",
+      "GOOGLE_DRIVE",
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
-        "DISCORD"
+        "HTTP_REQUEST",
+        "GOOGLE_DRIVE"
+      ],
+      [
+        "GOOGLE_DRIVE",
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "paymentData"
+      "signatureEvent",
+      "signedFile"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": false,
+    "expected_output": null
   },
   {
     "id": "wf_020",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
+    "prompt": "Read data from a Google Sheet with spreadsheetId '1DocsSheet123' on sheetName 'Metadata' range 'A:D' using 'read'. Use Mistral AI with model 'mistral-large' to generate a 2-sentence summary, and save it as a text file in Google Drive folderId '1SummaryFolderXYZ'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
+      "GOOGLE_SHEETS",
+      "MISTRAL",
+      "GOOGLE_DRIVE"
     ],
     "expected_edges": [
       [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
+        "GOOGLE_SHEETS",
+        "MISTRAL"
       ],
       [
-        "HTTP_REQUEST",
-        "MISTRAL"
+        "MISTRAL",
+        "GOOGLE_DRIVE"
       ]
     ],
     "expected_variables": [
-      "htmlContent",
-      "aiSummary"
+      "metadataRow",
+      "summary"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_021",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
+    "prompt": "When a POST HTTP request is received at endpoint 'https://api.support.com/webhook', use Mistral AI with model 'mistral-large' to suggest the most likely solution. Draft a reply email in Gmail to 'agent@company.com' with subject 'Ticket Suggested Reply'.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
+      "HTTP_REQUEST",
       "MISTRAL",
-      "SLACK"
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "GOOGLE_FORM_TRIGGER",
+        "HTTP_REQUEST",
         "MISTRAL"
       ],
       [
         "MISTRAL",
-        "SLACK"
+        "GMAIL"
       ]
     ],
     "expected_variables": [
-      "formData",
-      "aiSummary"
+      "ticketData",
+      "suggestion"
     ],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_022",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
+    "prompt": "On a Google Form submission for a bug report, use Mistral AI with model 'mistral-large' to extract clear reproduction steps. Create a new issue via a POST HTTP request to endpoint 'https://api.github.com/repos/org/repo/issues' with the necessary headers and body.",
+    "complexity": "medium",
     "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
+      "GOOGLE_FORM_TRIGGER",
+      "MISTRAL",
+      "HTTP_REQUEST"
     ],
     "expected_edges": [
       [
-        "GOOGLE_DRIVE",
-        "GMAIL"
+        "GOOGLE_FORM_TRIGGER",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "HTTP_REQUEST"
       ]
     ],
     "expected_variables": [
-      "fileData"
+      "bugReport",
+      "reproSteps"
     ],
-    "integration_count": 2,
+    "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_023",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
+    "prompt": "Fetch the latest tweets via a GET HTTP request to endpoint 'https://api.twitter.com/2/tweets/search/recent'. Use Mistral AI with model 'mistral-large' to detect sentiment. Use an IF node to check for negative feedback, and send it to Discord using webhookUrl 'https://discord.com/api/webhooks/123/support'.",
+    "complexity": "medium",
     "expected_nodes": [
       "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
+      "MISTRAL",
+      "IF",
+      "DISCORD"
     ],
     "expected_edges": [
       [
         "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "IF"
+      ],
+      [
+        "IF",
+        "DISCORD"
       ]
     ],
     "expected_variables": [
-      "payload"
+      "tweets",
+      "isNegative"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 3,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_024",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
+    "prompt": "When a customer inquiry is received via Gmail from 'customer@email.com', use Mistral AI with model 'mistral-large' to classify it. Use a SWITCH node to route it: if Technical, send to Discord webhookUrl 'https://discord.com/api/webhooks/123/tech'; otherwise reply via Gmail to 'support@company.com' with subject 'Inquiry routed'.",
+    "complexity": "hard",
     "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
+      "GMAIL",
+      "MISTRAL",
+      "SWITCH",
+      "DISCORD",
+      "GMAIL"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
+        "GMAIL",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
+        "SWITCH"
+      ],
+      [
+        "SWITCH",
         "DISCORD"
+      ],
+      [
+        "SWITCH",
+        "GMAIL"
+      ]
+    ],
+    "expected_connection_indices": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        2,
+        4
       ]
     ],
     "expected_variables": [
-      "paymentData"
+      "customerInquiry",
+      "classification"
     ],
-    "integration_count": 2,
-    "has_branch": false,
+    "integration_count": 4,
+    "has_branch": true,
     "has_loop": false,
-    "has_ai": false
+    "has_ai": true,
+    "expected_output": null
   },
   {
     "id": "wf_025",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
+    "prompt": "Manually trigger a workflow to read unresolved support tickets from Google Sheet with spreadsheetId '1SupportSheet123' on sheetName 'Tickets' range 'A:E' using 'read'. Use Mistral AI with model 'mistral-large' to prioritize them, and post a summary to Discord using webhookUrl 'https://discord.com/api/webhooks/123/triage'.",
+    "complexity": "medium",
     "expected_nodes": [
       "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ]
-    ],
-    "expected_variables": [
-      "htmlContent",
-      "aiSummary"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_026",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
+      "GOOGLE_SHEETS",
       "MISTRAL",
-      "SLACK"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "SLACK"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_027",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_DRIVE",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "fileData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_028",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "payload"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_029",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
-    "expected_nodes": [
-      "STRIPE_TRIGGER",
       "DISCORD"
     ],
     "expected_edges": [
       [
-        "STRIPE_TRIGGER",
+        "MANUAL_TRIGGER",
+        "GOOGLE_SHEETS"
+      ],
+      [
+        "GOOGLE_SHEETS",
+        "MISTRAL"
+      ],
+      [
+        "MISTRAL",
         "DISCORD"
       ]
     ],
     "expected_variables": [
-      "paymentData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_030",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ]
-    ],
-    "expected_variables": [
-      "htmlContent",
-      "aiSummary"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_031",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "SLACK"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "SLACK"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "aiSummary"
+      "tickets",
+      "prioritySummary"
     ],
     "integration_count": 3,
     "has_branch": false,
     "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_032",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_DRIVE",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "fileData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_033",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "payload"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_034",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
-    "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
-    ],
-    "expected_edges": [
-      [
-        "STRIPE_TRIGGER",
-        "DISCORD"
-      ]
-    ],
-    "expected_variables": [
-      "paymentData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_035",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ]
-    ],
-    "expected_variables": [
-      "htmlContent",
-      "aiSummary"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_036",
-    "prompt": "Summarize a Google Form using AI and send it to Slack",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "SLACK"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "SLACK"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_037",
-    "prompt": "When a new file is uploaded to Google Drive, send a Gmail",
-    "complexity": "easy",
-    "expected_nodes": [
-      "GOOGLE_DRIVE",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_DRIVE",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "fileData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_038",
-    "prompt": "Add a row to Google Sheets from a Webhook",
-    "complexity": "easy",
-    "expected_nodes": [
-      "HTTP_REQUEST",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "HTTP_REQUEST",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "payload"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_039",
-    "prompt": "Send a Discord message when a Stripe payment is received",
-    "complexity": "easy",
-    "expected_nodes": [
-      "STRIPE_TRIGGER",
-      "DISCORD"
-    ],
-    "expected_edges": [
-      [
-        "STRIPE_TRIGGER",
-        "DISCORD"
-      ]
-    ],
-    "expected_variables": [
-      "paymentData"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": false
-  },
-  {
-    "id": "wf_040",
-    "prompt": "Fetch a URL and summarize with AI",
-    "complexity": "easy",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "HTTP_REQUEST",
-      "MISTRAL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "HTTP_REQUEST"
-      ],
-      [
-        "HTTP_REQUEST",
-        "MISTRAL"
-      ]
-    ],
-    "expected_variables": [
-      "htmlContent",
-      "aiSummary"
-    ],
-    "integration_count": 2,
-    "has_branch": false,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_041",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_042",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_043",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_044",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_045",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_046",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_047",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_048",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_049",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_050",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_051",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_052",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_053",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_054",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_055",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_056",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_057",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_058",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_059",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_060",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_061",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_062",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_063",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_064",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_065",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_066",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_067",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_068",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_069",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_070",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_071",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_072",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_073",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_074",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_075",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_076",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_077",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_078",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_079",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_080",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_081",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_082",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_083",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_084",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_085",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_086",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_087",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_088",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_089",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_090",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_091",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_092",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_093",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_094",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_095",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_096",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_097",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_098",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_099",
-    "prompt": "If a Google Form submission is positive, send Slack else send Gmail",
-    "complexity": "medium",
-    "expected_nodes": [
-      "GOOGLE_FORM_TRIGGER",
-      "MISTRAL",
-      "IF",
-      "SLACK",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "GOOGLE_FORM_TRIGGER",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "SLACK"
-      ],
-      [
-        "IF",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "formData",
-      "sentiment",
-      "branch"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": false,
-    "has_ai": true
-  },
-  {
-    "id": "wf_100",
-    "prompt": "Search files in Drive, for each file summarize and log to Sheets",
-    "complexity": "medium",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_DRIVE",
-      "LOOP",
-      "MISTRAL",
-      "GOOGLE_SHEETS"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_DRIVE"
-      ],
-      [
-        "GOOGLE_DRIVE",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GOOGLE_SHEETS"
-      ]
-    ],
-    "expected_variables": [
-      "files",
-      "fileItem",
-      "aiSummary"
-    ],
-    "integration_count": 3,
-    "has_branch": false,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_101",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_102",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_103",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_104",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_105",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_106",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_107",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_108",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_109",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_110",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_111",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_112",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_113",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_114",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_115",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_116",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_117",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_118",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_119",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_120",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_121",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_122",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_123",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_124",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_125",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_126",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_127",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_128",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_129",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_130",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_131",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_132",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_133",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_134",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_135",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_136",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_137",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_138",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_139",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
-  },
-  {
-    "id": "wf_140",
-    "prompt": "Complex lead scoring: Fetch from Sheets, AI analyze, if high score loop through contacts and send personalized emails",
-    "complexity": "hard",
-    "expected_nodes": [
-      "MANUAL_TRIGGER",
-      "GOOGLE_SHEETS",
-      "MISTRAL",
-      "IF",
-      "LOOP",
-      "MISTRAL",
-      "GMAIL"
-    ],
-    "expected_edges": [
-      [
-        "MANUAL_TRIGGER",
-        "GOOGLE_SHEETS"
-      ],
-      [
-        "GOOGLE_SHEETS",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "IF"
-      ],
-      [
-        "IF",
-        "LOOP"
-      ],
-      [
-        "LOOP",
-        "MISTRAL"
-      ],
-      [
-        "MISTRAL",
-        "GMAIL"
-      ]
-    ],
-    "expected_variables": [
-      "leads",
-      "score",
-      "contacts",
-      "contactItem",
-      "emailBody"
-    ],
-    "integration_count": 4,
-    "has_branch": true,
-    "has_loop": true,
-    "has_ai": true
+    "has_ai": true,
+    "expected_output": null
   }
 ]
